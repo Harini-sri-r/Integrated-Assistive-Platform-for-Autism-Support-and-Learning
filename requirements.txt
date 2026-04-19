@@ -3,3 +3,4 @@ gunicorn
 nltk
 requests
 flask-login
+flask-sqlalchemy
