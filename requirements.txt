@@ -2,3 +2,4 @@ flask
 gunicorn
 nltk
 requests
+flask-login
