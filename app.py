@@ -14,6 +14,12 @@ import joblib
 import logging
 
 try:
+    nltk.data.find('sentiment/vader_lexicon')
+except LookupError:
+    nltk.download('vader_lexicon')
+
+from flask import Flask
+try:
     from transformers import pipeline
     print("Loading DistilBERT Pipeline (this may take a few seconds)...")
     bert_analyzer = pipeline("sentiment-analysis", model="distilbert-base-uncased-finetuned-sst-2-english")
