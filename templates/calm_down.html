@@ -1,0 +1,185 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="glass-panel" style="max-width: 900px; margin: 0 auto; text-align: center;">
+    <div class="mb-2">
+        <h1 style="font-size: 3rem; margin-bottom: 0.5rem;">Smart Calm Assistant</h1>
+        <p class="text-muted">Take a deep breath. Let the anxiety fade away. I'm here to help you relax.</p>
+    </div>
+
+    <!-- Breathing Exercise Section -->
+    <div id="breathing-section" class="glass-card mb-2" style="padding: 3rem; position: relative; overflow: hidden;">
+        <div id="breathing-circle" style="width: 150px; height: 150px; border-radius: 50%; border: 4px solid #000; margin: 0 auto; transition: transform 4s ease-in-out; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 1.2rem;">
+            Breathe In
+        </div>
+        <h2 id="breathing-instruction" class="mt-2">Ready?</h2>
+        <button id="start-breathing" class="btn-primary mt-2">Start Breathing Guide</button>
+    </div>
+
+    <div class="grid-2" style="gap: 1.5rem;">
+        <!-- Voice Mood Detector -->
+        <div class="glass-card">
+            <h3><i class="fas fa-microphone"></i> Voice Mood Detector</h3>
+            <p class="text-muted mb-2">Speak into the mic to check your stress level.</p>
+            <div id="voice-status" style="font-size: 1.5rem; font-weight: 700; margin: 1rem 0;">Ready</div>
+            <button id="start-voice" class="btn-secondary" style="width: 100%;">Start Recording Analysis</button>
+            <div class="progress-container mt-2" style="height: 6px; background: #f3f4f6;">
+                <div id="voice-bar" style="width: 0%; height: 100%; background: #000; transition: width 0.1s;"></div>
+            </div>
+        </div>
+
+        <!-- Relaxing Music -->
+        <div class="glass-card">
+            <h3><i class="fas fa-music"></i> Relaxing Sounds</h3>
+            <p class="text-muted mb-2">Gentle sounds to soothe your mind.</p>
+            <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                <button class="btn-secondary" onclick="playRelaxMusic('rain')">Rain Forest 🌧️</button>
+                <button class="btn-secondary" onclick="playRelaxMusic('waves')">Ocean Waves 🌊</button>
+                <button class="btn-secondary" onclick="playRelaxMusic('piano')">Soft Piano 🎹</button>
+            </div>
+            <audio id="relax-audio" loop></audio>
+        </div>
+    </div>
+
+        <!-- Sensory Tips -->
+        <div class="glass-card">
+            <h3><i class="fas fa-lightbulb"></i> Sensory Tips</h3>
+            <ul style="text-align: left; list-style: none; padding: 0;">
+                <li style="margin-bottom: 0.8rem;"><i class="fas fa-check-circle" style="color: #000;"></i> Dim the lights in your room.</li>
+                <li style="margin-bottom: 0.8rem;"><i class="fas fa-check-circle" style="color: #000;"></i> Try weighted blankets if available.</li>
+                <li style="margin-bottom: 0.8rem;"><i class="fas fa-check-circle" style="color: #000;"></i> Hum a gentle tone to self-soothe.</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<script>
+    const circle = document.getElementById('breathing-circle');
+    const instruction = document.getElementById('breathing-instruction');
+    const startBtn = document.getElementById('start-breathing');
+    let isBreathing = false;
+
+    function breathCycle() {
+        if (!isBreathing) return;
+        
+        // Inhale
+        circle.style.transform = 'scale(2)';
+        circle.innerText = 'Inhale';
+        instruction.innerText = 'Breathe in slowly through your nose...';
+        
+        setTimeout(() => {
+            if (!isBreathing) return;
+            // Hold
+            circle.innerText = 'Hold';
+            instruction.innerText = 'Hold for 2 seconds...';
+            
+            setTimeout(() => {
+                if (!isBreathing) return;
+                // Exhale
+                circle.style.transform = 'scale(1)';
+                circle.innerText = 'Exhale';
+                instruction.innerText = 'Exhale slowly through your mouth...';
+                
+                setTimeout(() => {
+                    breathCycle();
+                }, 4000);
+            }, 2000);
+        }, 4000);
+    }
+
+    startBtn.addEventListener('click', () => {
+        isBreathing = !isBreathing;
+        if (isBreathing) {
+            startBtn.innerText = 'Stop Guide';
+            breathCycle();
+        } else {
+            startBtn.innerText = 'Start Breathing Guide';
+            circle.style.transform = 'scale(1)';
+            circle.innerText = 'Paused';
+            instruction.innerText = 'Ready when you are.';
+        }
+    });
+
+    function playRelaxMusic(type) {
+        const audio = document.getElementById('relax-audio');
+        const sounds = {
+            'rain': 'https://www.soundjay.com/nature/rain-07.mp3',
+            'waves': 'https://www.soundjay.com/nature/ocean-waves-1.mp3',
+            'piano': 'https://www.soundjay.com/misc/sounds/wind-chime-1.mp3'
+        };
+        
+        if (audio.src === sounds[type] && !audio.paused) {
+            audio.pause();
+        } else {
+            audio.src = sounds[type];
+            audio.play();
+        }
+    }
+
+    // Voice Mood Detector Logic
+    const voiceBtn = document.getElementById('start-voice');
+    const voiceStatus = document.getElementById('voice-status');
+    const voiceBar = document.getElementById('voice-bar');
+    let voiceMonitoring = false;
+
+    async function startVoiceAnalysis() {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            const source = audioCtx.createMediaStreamSource(stream);
+            const analyser = audioCtx.createAnalyser();
+            source.connect(analyser);
+            analyser.fftSize = 512;
+            const dataArray = new Uint8Array(analyser.frequencyBinCount);
+
+            function analyze() {
+                if (!voiceMonitoring) return;
+                analyser.getByteFrequencyData(dataArray);
+                
+                let sum = 0;
+                let maxFreq = 0;
+                for (let i = 0; i < dataArray.length; i++) {
+                    sum += dataArray[i];
+                    if (dataArray[i] > dataArray[maxFreq]) maxFreq = i;
+                }
+                
+                let volume = sum / dataArray.length;
+                voiceBar.style.width = Math.min(100, volume * 2) + "%";
+                
+                // Simple heuristic: High volume + high frequency variance = Stress
+                if (volume > 50) {
+                    voiceStatus.innerText = "Stress Detected! 😨";
+                    voiceStatus.style.color = "var(--error)";
+                } else if (volume > 10) {
+                    voiceStatus.innerText = "Balanced State 🙂";
+                    voiceStatus.style.color = "var(--success)";
+                } else {
+                    voiceStatus.innerText = "Quiet / Calm 😌";
+                    voiceStatus.style.color = "var(--text-muted)";
+                }
+                
+                requestAnimationFrame(analyze);
+            }
+            
+            voiceMonitoring = true;
+            analyze();
+            voiceBtn.innerText = "Stop Voice Analysis";
+        } catch (e) {
+            alert("Microphone access denied.");
+        }
+    }
+
+    voiceBtn.addEventListener('click', () => {
+        if (!voiceMonitoring) {
+            startVoiceAnalysis();
+        } else {
+            voiceMonitoring = false;
+            voiceBtn.innerText = "Start Recording Analysis";
+            voiceStatus.innerText = "Ready";
+            voiceStatus.style.color = "var(--text)";
+            voiceBar.style.width = "0%";
+        }
+    });
+
+</script>
+{% endblock %}

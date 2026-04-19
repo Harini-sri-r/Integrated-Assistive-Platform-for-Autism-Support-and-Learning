@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="glass-panel" style="max-width: 400px; margin: 4rem auto; text-align: center;">
+    <h2 class="mb-2" style="font-size: 2rem;">Join ALP</h2>
+
+    {% if error %}
+    <div
+        style="background: rgba(255, 100, 100, 0.2); border: 1px solid rgba(255, 100, 100, 0.5); padding: 0.5rem; margin-bottom: 1rem; border-radius: 8px;">
+        {{ error }}
+    </div>
+    {% endif %}
+
+    <form action="{{ url_for('register') }}" method="POST">
+        <div class="form-group">
+            <input type="text" name="username" class="form-input" placeholder="Display Name (e.g., Super Learner)"
+                required>
+        </div>
+        <div class="form-group">
+            <input type="email" name="email" class="form-input" placeholder="Email Address" required>
+        </div>
+        <div class="form-group">
+            <input type="password" name="password" class="form-input" placeholder="Password" required>
+        </div>
+        <button type="submit" class="btn-primary" style="width: 100%;">Create Account</button>
+    </form>
+
+    <p class="mt-2" style="font-size: 0.9rem;">
+        Already have an account? <a href="{{ url_for('login') }}">Login here</a>.
+    </p>
+</div>
+{% endblock %}

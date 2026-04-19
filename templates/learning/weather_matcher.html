@@ -1,0 +1,186 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="text-center mb-2">
+    <h1>Weather Matcher</h1>
+    <p class="text-muted">What should we wear or bring? Pair the items with the weather!</p>
+</div>
+
+<div class="glass-panel" style="max-width: 800px; margin: 0 auto; padding: 2rem; text-align: center;">
+    <div id="game-stats" class="d-flex justify-content-between mb-3" style="font-weight: bold;">
+        <span>Score: <span id="score">0</span></span>
+        <span>Items: <span id="items-count">0</span>/4</span>
+    </div>
+
+    <div class="grid-2" style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; align-items: start;">
+        <div id="weather-target" class="glass-card"
+            style="padding: 2.5rem; text-align: center; min-height: 250px; display: flex; flex-direction: column; justify-content: center; border: 3px dashed rgba(255,255,255,0.2);">
+            <div id="current-weather-icon" style="font-size: 6rem; margin-bottom: 1rem;">☀️</div>
+            <h2 id="current-weather-text">Sunny Day</h2>
+        </div>
+
+        <div id="items-dock" class="glass-panel"
+            style="min-height: 250px; display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; padding: 1.5rem;">
+            <!-- Clothes/Items here -->
+        </div>
+    </div>
+
+    <div id="feedback" class="mt-4" style="min-height: 50px; font-size: 1.4rem; font-weight: bold;"></div>
+</div>
+
+<style>
+    .weather-item {
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 12px;
+        padding: 1rem;
+        cursor: grab;
+        transition: transform 0.2s;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .weather-item:active {
+        cursor: grabbing;
+    }
+
+    .weather-item:hover {
+        background: rgba(255, 255, 255, 0.15);
+    }
+
+    .target-active {
+        border-color: var(--accent) !important;
+        background: rgba(99, 102, 241, 0.1) !important;
+    }
+</style>
+
+<script>
+    const weatherSets = [
+        {
+            name: "Sunny Day",
+            icon: "☀️",
+            correct: ["Sunglasses", "Sun Hat"],
+            items: [
+                { icon: "🕶️", text: "Sunglasses" },
+                { icon: "👒", text: "Sun Hat" },
+                { icon: "🧣", text: "Scarf" },
+                { icon: "🧥", text: "Heavy Coat" }
+            ]
+        },
+        {
+            name: "Rainy Day",
+            icon: "🌧️",
+            correct: ["Umbrella", "Rain Boots"],
+            items: [
+                { icon: "🌂", text: "Umbrella" },
+                { icon: "👢", text: "Rain Boots" },
+                { icon: "🩴", text: "Flip Flops" },
+                { icon: "🧤", text: "Gloves" }
+            ]
+        },
+        {
+            name: "Snowy Day",
+            icon: "❄️",
+            correct: ["Gloves", "Scarf"],
+            items: [
+                { icon: "🧤", text: "Gloves" },
+                { icon: "🧣", text: "Scarf" },
+                { icon: "👕", text: "T-Shirt" },
+                { icon: "🕶️", text: "Sunglasses" }
+            ]
+        }
+    ];
+
+    let setIdx = 0;
+    let foundCorrect = 0;
+    let score = 0;
+
+    function loadSet() {
+        const s = weatherSets[setIdx];
+        document.getElementById('current-weather-icon').innerText = s.icon;
+        document.getElementById('current-weather-text').innerText = s.name;
+        document.getElementById('items-count').innerText = "0";
+        foundCorrect = 0;
+
+        const dock = document.getElementById('items-dock');
+        dock.innerHTML = '';
+        s.items.sort(() => Math.random() - 0.5).forEach((item, i) => {
+            const div = document.createElement('div');
+            div.className = 'weather-item';
+            div.draggable = true;
+            div.id = `item-${item.text}`;
+            div.innerHTML = `<span style="font-size: 2.5rem;">${item.icon}</span><span>${item.text}</span>`;
+            div.ondragstart = (e) => e.dataTransfer.setData("text", item.text);
+            dock.appendChild(div);
+        });
+
+        const target = document.getElementById('weather-target');
+        target.ondragover = (e) => { e.preventDefault(); target.classList.add('target-active'); };
+        target.ondragleave = () => target.classList.remove('target-active');
+        target.ondrop = handleDrop;
+
+        document.getElementById('feedback').innerText = "";
+    }
+
+    async function handleDrop(e) {
+        e.preventDefault();
+        const target = document.getElementById('weather-target');
+        target.classList.remove('target-active');
+
+        const itemText = e.dataTransfer.getData("text");
+        const s = weatherSets[setIdx];
+        const feedback = document.getElementById('feedback');
+
+        if (s.correct.includes(itemText)) {
+            const itemEl = document.getElementById(`item-${itemText}`);
+            itemEl.style.opacity = "0.3";
+            itemEl.draggable = false;
+
+            foundCorrect++;
+            score += 15;
+            document.getElementById('score').innerText = score;
+            document.getElementById('items-count').innerText = foundCorrect;
+
+            feedback.innerHTML = `<span style="color: #4ade80">Yes! ${itemText} is perfect for this weather! ✨</span>`;
+
+            if (foundCorrect === s.correct.length) {
+                setTimeout(() => {
+                    setIdx++;
+                    if (setIdx < weatherSets.length) {
+                        loadSet();
+                    } else {
+                        finishGame();
+                    }
+                }, 1500);
+            }
+        } else {
+            feedback.innerHTML = `<span style="color: #f87171">Hmm, maybe not the best choice for a ${s.name}. ❌</span>`;
+        }
+    }
+
+    async function finishGame() {
+        document.querySelector('.grid-2').innerHTML = `
+            <div class="glass-card" style="padding: 3rem; grid-column: span 2;">
+                <h2 style="font-size: 3rem;">Weather Ready!</h2>
+                <p style="font-size: 1.5rem; margin: 1rem 0;">You know exactly how to dress for every day!</p>
+                <div style="font-size: 5rem;">☀️🌧️❄️🌈</div>
+                <button class="btn-primary mt-2" onclick="window.location.href='/learning/hub'">Well Done!</button>
+            </div>
+        `;
+
+        await fetch('/api/log_activity', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                type: 'Life Safety',
+                score: score,
+                details: 'Matched weather conditions to appropriate safety gear/clothing.'
+            })
+        });
+    }
+
+    loadSet();
+</script>
+{% endblock %}

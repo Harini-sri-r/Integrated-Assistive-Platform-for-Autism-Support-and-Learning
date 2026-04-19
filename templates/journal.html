@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="glass-panel" style="max-width: 800px; margin: 0 auto;">
+    <div class="text-center mb-2">
+        <h1 style="font-size: 2.5rem; margin-bottom: 0.5rem;">Emotion Journal</h1>
+        <p class="text-muted">Record how you feel today. Your AI companion will help you understand your progress.</p>
+    </div>
+
+    <form method="POST" class="mb-2">
+        <div class="grid-2" style="grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+            <div class="form-group">
+                <label class="form-label">How are you feeling today?</label>
+                <select name="mood" class="form-input" required>
+                    <option value="Happy">Happy 😊</option>
+                    <option value="Calm">Calm 😌</option>
+                    <option value="Anxious">Anxious 😨</option>
+                    <option value="Tired">Tired 😴</option>
+                    <option value="Angry">Angry 😠</option>
+                    <option value="Sad">Sad 😢</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Stress Level (1-5)</label>
+                <input type="range" name="stress_level" min="1" max="5" value="1" class="form-input" style="padding: 0;">
+                <div class="d-flex justify-content-between" style="font-size: 0.8rem; color: var(--text-muted);">
+                    <span>Relaxed</span>
+                    <span>Very Stressed</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">Notes (Optional)</label>
+            <textarea name="note" class="form-input" rows="4" placeholder="What happened today?"></textarea>
+        </div>
+
+        <button type="submit" class="btn-primary" style="width: 100%;">Save Entry</button>
+    </form>
+
+    <div class="entries-section mt-2">
+        <h3 class="mb-2">Recent History</h3>
+        <div class="activity-list">
+            {% for entry in entries %}
+            <div class="glass-card mb-2" style="background: #fafafa; border-radius: 8px;">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <span class="badge" style="background: #000; color: #fff;">{{ entry.mood }}</span>
+                        {% if entry.sentiment_score is not none %}
+                            {% set polarity = "Positive" if entry.sentiment_score > 0.1 else ("Negative" if entry.sentiment_score < -0.1 else "Neutral") %}
+                            {% set badge_color = "#10b981" if polarity == "Positive" else ("#ef4444" if polarity == "Negative" else "#6b7280") %}
+                            <span class="badge" style="background: {{ badge_color }}; color: white; margin-left: 0.5rem;" title="AI Score: {{ entry.sentiment_score|round(2) }}">
+                                AI Sentiment: {{ polarity }}
+                            </span>
+                        {% endif %}
+                        <span class="text-muted" style="font-size: 0.9rem; margin-left: 0.5rem;">{{ entry.timestamp.strftime('%B %d, %Y %I:%M %p') }}</span>
+                    </div>
+                    <div class="text-muted" style="font-size: 0.9rem;">Stress level: {{ entry.stress_level }}/5</div>
+                </div>
+                {% if entry.note %}
+                <p class="mt-2" style="font-size: 0.95rem; line-height: 1.5;">{{ entry.note }}</p>
+                {% endif %}
+            </div>
+            {% else %}
+            <p class="text-center text-muted">No journal entries yet. Start by writing your first one!</p>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

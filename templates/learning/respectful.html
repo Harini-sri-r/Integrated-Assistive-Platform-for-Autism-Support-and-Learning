@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="glass-panel" style="max-width: 850px; margin: 2rem auto; padding: 2rem;">
+    <div style="text-align: center; margin-bottom: 2rem;">
+        <h2 style="font-size: 2.5rem; color: #60a5fa;">Respectful Learner Challenge</h2>
+        <p style="opacity: 0.8;">Practice kindness and respect in different social situations.</p>
+    </div>
+
+    <div id="scenario-section">
+        <div class="scenario-card"
+            style="background: rgba(255,255,255,0.05); border-radius: 15px; padding: 2rem; margin-bottom: 2rem; border: 1px solid rgba(255,255,255,0.1); text-align: center;">
+            <p id="scenario-text" style="font-size: 1.4rem; margin-bottom: 2rem; line-height: 1.6;"></p>
+            <div id="options-container" style="display: grid; gap: 1rem;">
+                <!-- Options will be injected here -->
+            </div>
+        </div>
+    </div>
+
+    <div id="result-container"
+        style="display:none; text-align: center; margin-top:2rem; background: rgba(0,0,0,0.2); padding: 2rem; border-radius: 15px; border: 1px solid #60a5fa;">
+        <h3 id="result-title" style="margin-bottom: 1rem; font-size: 2rem;">Challenge Complete!</h3>
+        <p id="result-text" style="font-size: 1.2rem; margin-bottom: 1.5rem;"></p>
+        <button class="btn-primary" onclick="window.location.reload()">Try Again</button>
+        <button class="btn-primary" onclick="window.location.href='/learning'">Back to Hub</button>
+        <button class="btn-secondary ml-2" onclick="window.location.href='/dashboard'">Back to Dashboard</button>
+    </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/respectful.js') }}"></script>
+{% endblock %}

@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="text-center mb-2">
+    <h1>Morning Routine</h1>
+    <p class="text-muted">Start your day right by checking off your morning goals!</p>
+</div>
+
+<div class="glass-panel" style="max-width: 600px; margin: 0 auto; padding: 2rem;">
+    <div id="checklist-container">
+        <div class="glass-card mb-2 checklist-item" onclick="toggleTask(this, 'Brush Teeth')">
+            <div style="font-size: 2rem;">🪥</div>
+            <div style="flex-grow: 1;">
+                <h3>Brush Teeth</h3>
+                <p>Keep your smile bright!</p>
+            </div>
+            <i class="fas fa-circle-check check-icon" style="font-size: 2rem; color: rgba(255,255,255,0.1);"></i>
+        </div>
+
+        <div class="glass-card mb-2 checklist-item" onclick="toggleTask(this, 'Wash Face')">
+            <div style="font-size: 2rem;">🧼</div>
+            <div style="flex-grow: 1;">
+                <h3>Wash Face</h3>
+                <p>Feel fresh and awake.</p>
+            </div>
+            <i class="fas fa-circle-check check-icon" style="font-size: 2rem; color: rgba(255,255,255,0.1);"></i>
+        </div>
+
+        <div class="glass-card mb-2 checklist-item" onclick="toggleTask(this, 'Get Dressed')">
+            <div style="font-size: 2rem;">👕</div>
+            <div style="flex-grow: 1;">
+                <h3>Get Dressed</h3>
+                <p>Pick your favorite clothes.</p>
+            </div>
+            <i class="fas fa-circle-check check-icon" style="font-size: 2rem; color: rgba(255,255,255,0.1);"></i>
+        </div>
+
+        <div class="glass-card mb-2 checklist-item" onclick="toggleTask(this, 'Eat Breakfast')">
+            <div style="font-size: 2rem;">🥣</div>
+            <div style="flex-grow: 1;">
+                <h3>Eat Breakfast</h3>
+                <p>Fuel up for the day.</p>
+            </div>
+            <i class="fas fa-circle-check check-icon" style="font-size: 2rem; color: rgba(255,255,255,0.1);"></i>
+        </div>
+    </div>
+
+    <div class="text-center mt-2">
+        <div id="progress-text" class="mb-2">0 of 4 tasks completed</div>
+        <button id="finish-btn" class="btn-primary" style="display: none;" onclick="finishRoutine()">Finish & Earn
+            Points</button>
+    </div>
+</div>
+
+<style>
+    .checklist-item {
+        display: flex;
+        align-items: center;
+        gap: 1.5rem;
+        cursor: pointer;
+        transition: all 0.3s;
+    }
+
+    .checklist-item.completed {
+        background: rgba(74, 222, 128, 0.1);
+        border-color: #4ade80;
+    }
+
+    .checklist-item.completed .check-icon {
+        color: #4ade80 !important;
+    }
+</style>
+
+<script>
+    let completedTasks = new Set();
+    const totalTasks = 4;
+
+    function toggleTask(element, taskName) {
+        if (completedTasks.has(taskName)) {
+            completedTasks.delete(taskName);
+            element.classList.remove('completed');
+        } else {
+            completedTasks.add(taskName);
+            element.classList.add('completed');
+            // Small sound or haptic feedback could go here
+        }
+
+        const count = completedTasks.size;
+        document.getElementById('progress-text').innerText = `${count} of ${totalTasks} tasks completed`;
+
+        if (count === totalTasks) {
+            document.getElementById('finish-btn').style.display = 'inline-block';
+        } else {
+            document.getElementById('finish-btn').style.display = 'none';
+        }
+    }
+
+    async function finishRoutine() {
+        // Log to DB
+        try {
+            await fetch('/api/log_activity', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    type: 'Routine Mastery',
+                    score: 10,
+                    details: 'Completed all morning routine tasks.'
+                })
+            });
+            alert("Great job! You started your day perfectly. Points added!");
+            window.location.href = '/dashboard';
+        } catch (e) {
+            console.error("Failed to log activity", e);
+        }
+    }
+</script>
+{% endblock %}

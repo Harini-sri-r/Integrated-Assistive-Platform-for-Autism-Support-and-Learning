@@ -1,0 +1,390 @@
+{% extends "base.html" %}
+
+{% block head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+    .dashboard-hero {
+        background: #ffffff;
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 2.5rem;
+        color: #000000;
+        margin-bottom: 2rem;
+        position: relative;
+    }
+
+    .stat-card-modern {
+        background: white;
+        border-radius: 8px;
+        padding: 1.5rem;
+        border: 1px solid var(--border);
+        transition: all 0.2s ease;
+    }
+
+    .stat-card-modern:hover {
+        transform: translateY(-2px);
+        border-color: #000;
+    }
+
+    .stat-card-modern::before {
+        display: none;
+    }
+
+    .stat-number {
+        font-size: 2.5rem;
+        font-weight: 800;
+        color: #000;
+        line-height: 1;
+    }
+
+    .stat-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.25rem;
+        margin-bottom: 1rem;
+        background: #f9fafb !important;
+        color: #000 !important;
+        border: 1px solid var(--border);
+    }
+
+    .progress-ring {
+        width: 100px;
+        height: 100px;
+        border-radius: 50%;
+        background: conic-gradient(#000 0deg, #f3f4f6 0deg);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .achievement-badge {
+        width: 60px;
+        height: 60px;
+        border-radius: 8px;
+        background: #f9fafb;
+        border: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #000;
+        font-size: 1.5rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<div class="dashboard-hero">
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 2rem; position: relative; z-index: 1;">
+        <div>
+            <h1 style="margin: 0 0 0.5rem 0; font-size: 2.5rem; font-weight: 800; color: #000;">
+                Welcome back, {{ user.username or user.email.split('@')[0] }}! 👋
+            </h1>
+            <p style="margin: 0; font-size: 1.125rem; color: #000; opacity: 0.7;">
+                Continue your amazing learning journey
+            </p>
+        </div>
+        <div style="text-align: center;">
+            <div class="progress-ring" id="xpRing">
+                <div style="font-size: 1.5rem; font-weight: 800; color: #000;" id="stat-level">1</div>
+            </div>
+            <small style="display: block; margin-top: 0.5rem; color: #000; font-weight: 600;"><span id="stat-xp">0</span> XP</small>
+        </div>
+    </div>
+</div>
+
+<!-- Stats Grid -->
+<div
+    style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
+    <div class="stat-card-modern">
+        <div class="stat-icon" style="background: linear-gradient(135deg, #fbbf24, #f59e0b); color: white;">
+            <i class="fas fa-trophy"></i>
+        </div>
+        <div class="stat-number" id="stat-total">{{ total_activities }}</div>
+        <div class="stat-label">Activities Completed</div>
+    </div>
+
+    <div class="stat-card-modern">
+        <div class="stat-icon" style="background: linear-gradient(135deg, #ef4444, #dc2626); color: white;">
+            <i class="fas fa-fire"></i>
+        </div>
+        <div class="stat-number" id="stat-streak">{{ streak }}</div>
+        <div class="stat-label">Day Streak</div>
+    </div>
+
+    <div class="stat-card-modern">
+        <div class="stat-icon" style="background: linear-gradient(135deg, #10b981, #059669); color: white;">
+            <i class="fas fa-check-circle"></i>
+        </div>
+        <div class="stat-number" id="missions-completed">0</div>
+        <div class="stat-label">Missions Complete</div>
+    </div>
+
+    <div class="stat-card-modern">
+        <div class="stat-icon" style="background: linear-gradient(135deg, #3b82f6, #2563eb); color: white;">
+            <i class="fas fa-star"></i>
+        </div>
+        <div class="stat-number" id="score-avg">--</div>
+        <div class="stat-label">Average Score</div>
+    </div>
+</div>
+
+
+
+<!-- Main Content Grid (2 Columns) -->
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 2rem;">
+
+    <!-- Daily Missions -->
+    <div class="glass-card" style="height: fit-content;">
+        <h3
+            style="margin-bottom: 1.5rem; font-size: 1.25rem; font-weight: 700; color: #1f2937; display: flex; align-items: center; gap: 0.5rem;">
+            <i class="fas fa-tasks" style="color: #3b82f6;"></i> Today's Missions
+        </h3>
+        {% if daily_goals %}
+        <div>
+            {% for goal in daily_goals %}
+            <div class="mission-card {% if goal.is_completed %}completed{% endif %}" id="goal-{{ goal.id }}">
+                <div style="display: flex; align-items: center; gap: 1rem; flex: 1;">
+                    <div>
+                        {% if goal.is_completed %}
+                        <i class="fas fa-check-circle" style="color: #10b981; font-size: 1.5rem;"></i>
+                        {% else %}
+                        <i class="far fa-circle" style="color: #d1d5db; font-size: 1.5rem;"></i>
+                        {% endif %}
+                    </div>
+                    <span
+                        style="{% if goal.is_completed %}text-decoration: line-through; color: #9ca3af;{% else %}color: #1f2937; font-weight: 500;{% endif %}">
+                        {{ goal.content }}
+                    </span>
+                </div>
+                <button onclick="toggleGoal('{{ goal.id }}')"
+                    style="padding: 0.5rem 1rem; background: {% if goal.is_completed %}#f3f4f6{% else %}#1f2937{% endif %}; color: {% if goal.is_completed %}#6b7280{% else %}white{% endif %}; border: none; border-radius: 6px; cursor: pointer; font-size: 0.875rem; font-weight: 500;">
+                    {% if goal.is_completed %}Undo{% else %}Done{% endif %}
+                </button>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p style="color: #9ca3af; text-align: center; padding: 2rem 0;">No missions for today. Check back tomorrow!</p>
+        {% endif %}
+    </div>
+
+    <!-- Right Column - Insights & Notes -->
+    <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+
+        <!-- AI Coach Tip -->
+        <div class="glass-card" style="background: #f9fafb; border: 1px solid #000;">
+            <div style="display: flex; align-items: center; gap: 1rem;">
+                <div style="font-size: 2.5rem;">💡</div>
+                <div style="flex: 1;">
+                    <h5 style="margin: 0 0 0.5rem 0; color: #000; font-weight: 700;">Coach's Tip</h5>
+                    <p style="margin: 0; color: #000; font-weight: 500; font-size: 0.875rem;" id="ai-tip">
+                        Great progress today! Keep up your amazing streak!
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Notes -->
+        <div class="glass-card">
+            <h5
+                style="margin: 0 0 1rem 0; font-weight: 700; color: #1f2937; display: flex; align-items: center; gap: 0.5rem;">
+                <i class="fas fa-sticky-note" style="color: #fbbf24;"></i> Quick Notes
+            </h5>
+            <textarea id="user-notes"
+                style="width: 100%; padding: 0.75rem; border: 1px solid #e5e7eb; border-radius: 8px; font-size: 0.875rem; min-height: 80px; resize: vertical; font-family: inherit;"
+                placeholder="Write your learning notes here..."></textarea>
+            <button onclick="saveNotes()" class="btn-primary"
+                style="margin-top: 0.75rem; padding: 0.5rem 1.5rem; float: right;">
+                <i class="fas fa-save"></i> Save
+            </button>
+            <div style="clear: both;"></div>
+        </div>
+
+        <!-- Achievements Trophy Case -->
+        <div class="glass-card">
+            <h5
+                style="margin: 0 0 1rem 0; font-weight: 700; color: #1f2937; display: flex; align-items: center; gap: 0.5rem;">
+                <i class="fas fa-medal" style="color: #fbbf24;"></i> Trophy Case
+            </h5>
+            <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+                {% if badges %}
+                    {% for badge in badges %}
+                    <div class="achievement-badge" title="{{ badge.badge_name }}: {{ badge.badge_desc }}" style="background: linear-gradient(135deg, #f3f4f6, #e5e7eb); cursor: help;">
+                        {{ badge.icon }}
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <p style="color: #9ca3af; font-size: 0.85rem; margin: 0;">Complete activities and maintain streaks to earn badges!</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Progress Chart & Activity Table -->
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 2rem;">
+    <!-- Progress Chart -->
+    <div class="chart-container">
+        <h3 style="margin: 0 0 1.5rem 0; font-weight: 700; color: #1f2937; font-size: 1.125rem;">
+            <i class="fas fa-chart-line" style="color: #3b82f6;"></i> Your Progress
+        </h3>
+        <div style="position: relative; height: 250px;">
+            <canvas id="activityChart"></canvas>
+        </div>
+    </div>
+
+    <!-- Recent Activities -->
+    <div class="chart-container">
+        <h3 style="margin: 0 0 1.5rem 0; font-weight: 700; color: #1f2937; font-size: 1.125rem;">
+            <i class="fas fa-history" style="color: #10b981;"></i> Recent Activity
+        </h3>
+        <div style="max-height: 250px; overflow-y: auto;">
+            {% if activities %}
+            <table style="width: 100%; border-collapse: collapse;">
+                <tbody id="activity-body">
+                    {% for activity in activities[:5] %}
+                    <tr style="border-bottom: 1px solid #f3f4f6;">
+                        <td style="padding: 0.75rem 0; color: #1f2937; font-weight: 500; font-size: 0.875rem;">
+                            {{ activity.activity_type }}
+                        </td>
+                        <td style="padding: 0.75rem 0; text-align: center; font-weight: 700; color: #10b981;">
+                            {{ activity.score }}
+                        </td>
+                        <td style="padding: 0.75rem 0; text-align: right; color: #9ca3af; font-size: 0.75rem;">
+                            {{ activity.timestamp.strftime('%m-%d %H:%M') }}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <p style="color: #9ca3af; text-align: center; padding: 2rem 0;">No recent activities. Start your journey!
+            </p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+    let myChart;
+
+    function initChart(labels, data) {
+        const ctx = document.getElementById('activityChart').getContext('2d');
+        myChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Activity Scores',
+                    data: data,
+                    borderColor: '#1f2937',
+                    backgroundColor: 'rgba(31, 41, 55, 0.1)',
+                    tension: 0.4,
+                    fill: true,
+                    borderWidth: 3,
+                    pointBackgroundColor: '#1f2937',
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 2,
+                    pointRadius: 5,
+                    pointHoverRadius: 7
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: { color: '#f3f4f6' },
+                        ticks: { color: '#6b7280' }
+                    },
+                    x: {
+                        grid: { display: false },
+                        ticks: { color: '#6b7280' }
+                    }
+                }
+            }
+        });
+    }
+
+    function updateProgressRing(percentage) {
+        const ring = document.getElementById('xpRing');
+        const degrees = (percentage / 100) * 360;
+        ring.style.background = `conic-gradient(#000 ${degrees}deg, #f3f4f6 ${degrees}deg)`;
+    }
+
+    function updateDashboard() {
+        fetch('/api/user_stats')
+            .then(res => res.json())
+            .then(data => {
+                document.getElementById('stat-total').innerText = data.total_activities;
+                document.getElementById('stat-streak').innerText = data.streak;
+                document.getElementById('stat-level').innerText = data.level;
+                document.getElementById('stat-xp').innerText = data.total_xp;
+                updateProgressRing(data.xp_percentage || 0);
+
+                // Update chart
+                if (myChart && data.chart_data) {
+                    myChart.data.labels = data.chart_data.map(d => d.date);
+                    myChart.data.datasets[0].data = data.chart_data.map(d => d.score);
+                    myChart.update();
+                }
+
+                // Update average score
+                if (data.chart_data && data.chart_data.length > 0) {
+                    const avg = data.chart_data.reduce((sum, d) => sum + d.score, 0) / data.chart_data.length;
+                    document.getElementById('score-avg').innerText = Math.round(avg);
+                }
+
+                // Update missions completed
+                const completedMissions = document.querySelectorAll('.mission-card.completed').length;
+                document.getElementById('missions-completed').innerText = completedMissions;
+            });
+    }
+
+    function saveNotes() {
+        const notes = document.getElementById('user-notes').value;
+        localStorage.setItem('autism_platform_notes', notes);
+
+        // Visual feedback
+        const btn = event.target;
+        const originalHTML = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-check"></i> Saved!';
+        btn.style.background = '#10b981';
+        setTimeout(() => {
+            btn.innerHTML = originalHTML;
+            btn.style.background = '';
+        }, 2000);
+    }
+
+    function loadNotes() {
+        const saved = localStorage.getItem('autism_platform_notes');
+        if (saved) document.getElementById('user-notes').value = saved;
+    }
+
+    function toggleGoal(goalId) {
+        fetch(`/api/toggle_goal/${goalId}`, { method: 'POST' })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    location.reload();
+                }
+            });
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        loadNotes();
+        initChart([], []);
+        updateDashboard();
+        setInterval(updateDashboard, 10000);
+    });
+</script>
+{% endblock %}

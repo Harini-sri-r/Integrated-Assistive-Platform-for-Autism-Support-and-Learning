@@ -1,0 +1,292 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="hub-header">
+    <h1 class="hub-title">Word Explorer</h1>
+    <p class="hub-subtitle">Expand your world, one word at a time.</p>
+</div>
+
+<!-- Category Selector -->
+<div id="category-selector" class="glass-panel mb-4" style="max-width: 800px; margin: 0 auto; padding: 2rem;">
+    <h3 class="mb-3 text-center">Choose a Category</h3>
+    <div class="grid-container"
+        style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem;">
+        <button onclick="selectCategory('animals')" class="glass-card btn-category">
+            <div style="font-size: 3rem;">🦁</div>
+            <div>Animals</div>
+        </button>
+        <button onclick="selectCategory('emotions')" class="glass-card btn-category">
+            <div style="font-size: 3rem;">😊</div>
+            <div>Emotions</div>
+        </button>
+        <button onclick="selectCategory('home')" class="glass-card btn-category">
+            <div style="font-size: 3rem;">🏠</div>
+            <div>Home</div>
+        </button>
+        <button onclick="selectCategory('actions')" class="glass-card btn-category">
+            <div style="font-size: 3rem;">🏃</div>
+            <div>Actions</div>
+        </button>
+    </div>
+</div>
+
+<!-- Learning Interface (Hidden initially) -->
+<div id="learning-interface" style="display: none; max-width: 900px; margin: 0 auto;">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <button onclick="showCategories()" class="btn-secondary"><i class="fas fa-arrow-left"></i> Back</button>
+        <div class="d-flex gap-2">
+            <button id="btn-mode-learn" class="btn-primary active" onclick="setMode('learn')">Learn</button>
+            <button id="btn-mode-quiz" class="btn-secondary" onclick="setMode('quiz')">Quiz</button>
+        </div>
+    </div>
+
+    <!-- LEARN MODE -->
+    <div id="learn-container" class="glass-panel text-center fade-in">
+        <div id="vocab-card" class="glass-card mb-4"
+            style="min-height: 400px; display: flex; flex-direction: column; justify-content: center; align-items: center; transition: all 0.3s ease; border: 2px solid #000;">
+            <div id="vocab-emoji"
+                style="font-size: 8rem; margin-bottom: 1rem;"></div>
+            <h2 id="vocab-word" style="font-size: 4rem; margin-bottom: 0.5rem; color: #000; font-weight: 800;"></h2>
+            <p id="vocab-definition" style="font-size: 1.5rem; color: #000; opacity: 0.7; max-width: 80%;"></p>
+        </div>
+
+        <div class="d-flex justify-content-center gap-3">
+            <button onclick="prevWord()" class="btn-secondary circle-btn"><i class="fas fa-chevron-left"></i></button>
+            <button onclick="speakWord()" class="btn-primary" style="padding: 1rem 3rem; font-size: 1.2rem;"><i
+                    class="fas fa-volume-up"></i> Listen</button>
+            <button onclick="nextWord()" class="btn-secondary circle-btn"><i class="fas fa-chevron-right"></i></button>
+        </div>
+    </div>
+
+    <!-- QUIZ MODE -->
+    <div id="quiz-container" class="glass-panel text-center fade-in" style="display: none;">
+        <h2 class="mb-4">Find the <span id="quiz-target-word" class="text-primary fw-bold"></span></h2>
+
+        <div id="quiz-options" class="grid-container" style="grid-template-columns: repeat(3, 1fr); gap: 2rem;">
+            <!-- Options injected here -->
+        </div>
+
+        <div id="quiz-feedback" class="mt-4" style="min-height: 60px; font-size: 1.5rem;"></div>
+        <button id="btn-next-quiz" class="btn-primary mt-2" style="display: none;" onclick="startQuiz()">Next Question
+            <i class="fas fa-arrow-right"></i></button>
+    </div>
+</div>
+
+<style>
+    .btn-category {
+        border: 1px solid var(--border);
+        background: white;
+        cursor: pointer;
+        padding: 2rem;
+        transition: all 0.2s;
+        text-align: center;
+        color: #000;
+        border-radius: 8px;
+    }
+
+    .btn-category:hover {
+        transform: translateY(-2px);
+        border-color: #000;
+    }
+
+    .circle-btn {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+        border: 1px solid var(--border);
+        background: white;
+        color: #000;
+        cursor: pointer;
+    }
+    
+    .circle-btn:hover {
+        border-color: #000;
+    }
+
+    .active {
+        background: #000 !important;
+        color: #fff !important;
+    }
+</style>
+
+<script>
+    const db = {
+        animals: [
+            { word: "Lion", emoji: "🦁", def: "The king of the jungle." },
+            { word: "Elephant", emoji: "🐘", def: "A very large animal with a long trunk." },
+            { word: "Monkey", emoji: "🐵", def: "A clever animal that loves bananas." },
+            { word: "Penguin", emoji: "🐧", def: "A bird that swims but cannot fly." },
+            { word: "Giraffe", emoji: "🦒", def: "An animal with a very long neck." }
+        ],
+        emotions: [
+            { word: "Happy", emoji: "😊", def: "Feeling good and smiling." },
+            { word: "Sad", emoji: "😢", def: "Feeling unhappy or down." },
+            { word: "Angry", emoji: "😠", def: "Feeling mad or frustrated." },
+            { word: "Surprised", emoji: "😮", def: "Feeling shocked or amazed." },
+            { word: "Sleepy", emoji: "😴", def: "Feeling ready for bed." }
+        ],
+        home: [
+            { word: "House", emoji: "🏠", def: "A place where people live." },
+            { word: "Bed", emoji: "🛏️", def: "Furniture for sleeping." },
+            { word: "Chair", emoji: "🪑", def: "Furniture for sitting." },
+            { word: "Table", emoji: "🤠", def: "Furniture with a flat top." },
+            { word: "Lamp", emoji: "💡", def: "A device that gives light." }
+        ],
+        actions: [
+            { word: "Run", emoji: "🏃", def: "To move very fast on your feet." },
+            { word: "Jump", emoji: "🦘", def: "To push yourself off the ground." },
+            { word: "Eat", emoji: "🍽️", def: "To put food in your mouth." },
+            { word: "Sleep", emoji: "💤", def: "To rest with your eyes closed." },
+            { word: "Read", emoji: "📖", def: "To look at words and understand them." }
+        ]
+    };
+
+    let currentCategory = [];
+    let currentIndex = 0;
+    let currentMode = 'learn';
+    let quizTarget = null;
+
+    function selectCategory(cat) {
+        currentCategory = db[cat];
+        currentIndex = 0;
+        document.getElementById('category-selector').style.display = 'none';
+        document.getElementById('learning-interface').style.display = 'block';
+        setMode('learn');
+    }
+
+    function showCategories() {
+        document.getElementById('category-selector').style.display = 'block';
+        document.getElementById('learning-interface').style.display = 'none';
+    }
+
+    function setMode(mode) {
+        currentMode = mode;
+        document.getElementById('btn-mode-learn').classList.toggle('active', mode === 'learn');
+        document.getElementById('btn-mode-learn').classList.toggle('btn-secondary', mode !== 'learn');
+        document.getElementById('btn-mode-quiz').classList.toggle('active', mode === 'quiz');
+        document.getElementById('btn-mode-quiz').classList.toggle('btn-secondary', mode !== 'quiz');
+
+        if (mode === 'learn') {
+            document.getElementById('learn-container').style.display = 'block';
+            document.getElementById('quiz-container').style.display = 'none';
+            updateCard();
+        } else {
+            document.getElementById('learn-container').style.display = 'none';
+            document.getElementById('quiz-container').style.display = 'block';
+            startQuiz();
+        }
+    }
+
+    // Learn Functions
+    function updateCard() {
+        if (!currentCategory.length) return;
+        const item = currentCategory[currentIndex];
+        document.getElementById('vocab-emoji').textContent = item.emoji;
+        document.getElementById('vocab-word').textContent = item.word;
+        document.getElementById('vocab-definition').textContent = item.def;
+
+        // Animation
+        const card = document.getElementById('vocab-card');
+        card.style.transform = 'scale(0.95)';
+        setTimeout(() => card.style.transform = 'scale(1)', 150);
+    }
+
+    function nextWord() {
+        currentIndex = (currentIndex + 1) % currentCategory.length;
+        updateCard();
+    }
+
+    function prevWord() {
+        currentIndex = (currentIndex - 1 + currentCategory.length) % currentCategory.length;
+        updateCard();
+    }
+
+    function speakWord() {
+        const item = currentCategory[currentIndex];
+        const utterance = new SpeechSynthesisUtterance(item.word);
+        utterance.rate = 0.9;
+        window.speechSynthesis.speak(utterance);
+    }
+
+    // Quiz Functions
+    let quizCount = 0;
+    let quizScore = 0;
+    const MAX_QUESTIONS = 5;
+
+    function startQuiz() {
+        if (quizCount >= MAX_QUESTIONS) {
+            finishVocabQuiz();
+            return;
+        }
+
+        quizTarget = currentCategory[Math.floor(Math.random() * currentCategory.length)];
+        document.getElementById('quiz-target-word').innerText = quizTarget.word;
+        document.getElementById('quiz-feedback').innerText = '';
+        document.getElementById('btn-next-quiz').style.display = 'none';
+
+        let options = [quizTarget];
+        while (options.length < 3) {
+            const r = currentCategory[Math.floor(Math.random() * currentCategory.length)];
+            if (!options.includes(r)) options.push(r);
+        }
+        options.sort(() => Math.random() - 0.5);
+
+        const grid = document.getElementById('quiz-options');
+        grid.innerHTML = '';
+
+        options.forEach(opt => {
+            const btn = document.createElement('button');
+            btn.className = 'glass-card';
+            btn.style.fontSize = '5rem';
+            btn.style.cursor = 'pointer';
+            btn.style.background = 'rgba(255,255,255,0.05)';
+            btn.style.border = 'none';
+            btn.style.padding = '1rem';
+            btn.style.transition = 'all 0.2s';
+
+            btn.innerHTML = `<div>${opt.emoji}</div>`;
+            btn.onclick = () => checkAnswer(opt, btn);
+            grid.appendChild(btn);
+        });
+    }
+
+    function checkAnswer(selected, btn) {
+        if (selected.word === quizTarget.word) {
+            document.getElementById('quiz-feedback').innerHTML = '<span style="color:#4ade80">Correct! Great Job! 🎉</span>';
+            btn.style.background = 'rgba(74, 222, 128, 0.3)';
+            btn.style.transform = 'scale(1.1)';
+            document.getElementById('btn-next-quiz').style.display = 'inline-block';
+            quizScore++;
+            quizCount++;
+
+            fetch('/api/log_activity', {
+                method: 'POST', body: JSON.stringify({ type: 'Vocab Quiz', score: 10, details: `Identified ${quizTarget.word}` }),
+                headers: { 'Content-Type': 'application/json' }
+            });
+        } else {
+            document.getElementById('quiz-feedback').innerHTML = '<span style="color:#f87171">Oops, try again!</span>';
+            btn.style.background = 'rgba(248, 113, 113, 0.3)';
+            btn.style.transform = 'scale(0.9)';
+        }
+    }
+
+    function finishVocabQuiz() {
+        const container = document.getElementById('quiz-container');
+        container.innerHTML = `
+            <div class="glass-card" style="padding: 3rem;">
+                <h2>Quiz Completed! 🌟</h2>
+                <p style="font-size: 2rem; margin: 1rem 0;">Your Score: ${quizScore} / ${MAX_QUESTIONS}</p>
+                <div style="font-size: 5rem;">🏆</div>
+                <button class="btn-primary mt-3" onclick="location.reload()">Play Again</button>
+                <button class="btn-secondary mt-3" onclick="showCategories()">Back to Categories</button>
+            </div>
+        `;
+        quizCount = 0;
+        quizScore = 0;
+    }
+</script>
+{% endblock %}

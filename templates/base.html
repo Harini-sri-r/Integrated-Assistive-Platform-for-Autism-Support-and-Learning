@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="ALP PRO — a calm, skills-based learning space with games, communication tools, and family-friendly progress views.">
+    <title>ALP PRO — Autism Learning Platform</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@500;700;800&display=swap"
+        rel="stylesheet">
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    {% block head %}{% endblock %}
+</head>
+
+<body>
+    <a class="skip-link" href="#mainContent">Skip to main content</a>
+    <!-- Background (Minimalist) -->
+    <div style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -2; background: #ffffff;"></div>
+    
+    <!-- Sidebar Navigation -->
+    <button class="sidebar-toggle" id="sidebarToggle">
+        <i class="fas fa-bars"></i>
+    </button>
+
+    <div class="sidebar" id="sidebar">
+        <div class="brand">
+            <i class="fas fa-brain"></i>
+            <span>ALP PRO</span>
+        </div>
+
+        {% if current_user.is_authenticated %}
+        <nav class="sidebar-nav">
+            <a href="{{ url_for('dashboard') }}" class="sidebar-link">
+                <i class="fas fa-house"></i>
+                <span>Home</span>
+            </a>
+            <a href="{{ url_for('parent_dashboard') }}" class="sidebar-link">
+                <i class="fas fa-chart-simple"></i>
+                <span>Family insights</span>
+            </a>
+            <a href="{{ url_for('parent_support') }}" class="sidebar-link">
+                <i class="fas fa-heart"></i>
+                <span>Parent Support</span>
+            </a>
+            <a href="{{ url_for('chatbot_page') }}" class="sidebar-link">
+                <i class="fas fa-robot"></i>
+                <span>Social AI</span>
+            </a>
+            <a href="{{ url_for('learning_hub') }}" class="sidebar-link">
+                <i class="fas fa-book-open"></i>
+                <span>Academy</span>
+            </a>
+            <a href="{{ url_for('therapy') }}" class="sidebar-link">
+                <i class="fas fa-clock"></i>
+                <span>Routines</span>
+            </a>
+        </nav>
+
+        <div class="sidebar-footer">
+            <a href="{{ url_for('settings') }}" class="sidebar-link">
+                <i class="fas fa-gear"></i>
+                <span>Settings</span>
+            </a>
+            <a href="{{ url_for('logout') }}" class="sidebar-link">
+                <i class="fas fa-arrow-right-from-bracket"></i>
+                <span>Sign Out</span>
+            </a>
+        </div>
+        {% else %}
+        <nav class="sidebar-nav">
+            <a href="{{ url_for('login') }}" class="sidebar-link">
+                <i class="fas fa-right-to-bracket"></i>
+                <span>Sign In</span>
+            </a>
+            <a href="{{ url_for('register') }}" class="sidebar-link">
+                <i class="fas fa-user-plus"></i>
+                <span>Register</span>
+            </a>
+        </nav>
+        {% endif %}
+    </div>
+
+    <main class="main-content" id="mainContent">
+        {% block content %}{% endblock %}
+    </main>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    {% block scripts %}{% endblock %}
+</body>
+
+</html>

@@ -1,0 +1,667 @@
+{% extends "base.html" %}
+
+{% block head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+    .dashboard-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 2rem;
+    }
+
+    /* KPI Cards */
+    .kpi-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .kpi-card {
+        background: #ffffff;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 1.5rem;
+    }
+
+    /* Family recommendation highlight */
+    .recommendation-alert {
+        background: #f9fafb;
+        border-left: 4px solid #000;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        border-radius: 0 8px 8px 0;
+    }
+
+    .video-card {
+        display: flex;
+        gap: 1rem;
+        padding: 1rem;
+        border-bottom: 1px solid var(--border);
+        align-items: center;
+    }
+
+    .video-card:last-child { border-bottom: none; }
+
+    .status-badge {
+        padding: 0.25rem 0.75rem;
+        border-radius: 9999px;
+        font-size: 0.75rem;
+        font-weight: 500;
+    }
+
+    .status-optimal {
+        background: #ecfdf5;
+        color: #047857;
+    }
+
+    .status-attention {
+        background: #fef2f2;
+        color: #b91c1c;
+    }
+
+    .status-neutral {
+        background: #f1f5f9;
+        color: #475569;
+    }
+
+    /* Smart Recommendation Panel */
+    .smart-rec-panel {
+        background: white;
+        border: 2px solid #000;
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        display: flex;
+        gap: 2rem;
+        align-items: center;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .smart-rec-panel::after {
+        content: 'FAMILY TIP';
+        position: absolute;
+        top: 10px;
+        right: -35px;
+        background: #000;
+        color: #fff;
+        padding: 4px 40px;
+        font-size: 0.65rem;
+        font-weight: 800;
+        transform: rotate(45deg);
+    }
+
+    .smart-rec-icon {
+        width: 64px;
+        height: 64px;
+        background: #f3f4f6;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        color: #000;
+        flex-shrink: 0;
+    }
+
+    .smart-rec-content { flex: 1; }
+    .smart-rec-badge {
+        display: inline-block;
+        padding: 2px 8px;
+        border-radius: 4px;
+        font-size: 0.7rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        margin-bottom: 0.5rem;
+    }
+
+    .type-Urgent { background: #fee2e2; color: #991b1b; }
+    .type-Support { background: #fce7f3; color: #9d174d; }
+    .type-Attention { background: #fef3c7; color: #92400e; }
+    .type-Focus { background: #dbeafe; color: #1e40af; }
+    .type-Neutral { background: #f1f5f9; color: #475569; }
+
+    .smart-rec-title { font-size: 1.25rem; font-weight: 800; margin: 0 0 0.25rem 0; color: #000; }
+    .smart-rec-desc { font-size: 0.9rem; color: #6b7280; margin-bottom: 1rem; }
+    
+    .smart-rec-actions { display: flex; gap: 1rem; }
+
+    /* Video Embed Styles */
+    .video-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+        gap: 2rem;
+    }
+
+    .video-embed-card {
+        background: white;
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        overflow: hidden;
+        transition: all 0.3s ease;
+    }
+
+    .video-embed-card:hover {
+        transform: translateY(-5px);
+        border-color: #000;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    }
+
+    .video-container {
+        position: relative;
+        padding-bottom: 56.25%; /* 16:9 */
+        height: 0;
+        overflow: hidden;
+        background: #000;
+    }
+
+    .video-container iframe {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        border: 0;
+    }
+
+    .video-info {
+        padding: 1.25rem;
+    }
+
+    .video-info h4 {
+        margin: 0 0 0.5rem 0;
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: #000;
+    }
+
+    .video-info p {
+        margin: 0;
+        font-size: 0.875rem;
+        color: #6b7280;
+        line-height: 1.5;
+    }
+
+    /* Video Filters */
+    .btn-filter {
+        background: #f1f5f9;
+        color: #475569;
+        border: 1px solid #e2e8f0;
+        padding: 0.5rem 1rem;
+        border-radius: 6px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .btn-filter:hover {
+        background: #e2e8f0;
+        color: #000;
+    }
+
+    .btn-filter.active {
+        background: #000;
+        color: #fff;
+        border-color: #000;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+
+    <!-- 1. Header -->
+    <div class="clinical-header">
+        <div class="patient-info">
+            <h1>Family progress &amp; wellness</h1>
+            <div class="patient-meta">
+                Account: {{ user.id }} • {{ user.username or user.email.split('@')[0] }} • Charts use in-app activity only—not a diagnosis.
+            </div>
+        </div>
+        <div class="action-bar" style="display: flex; flex-direction: column; gap: 0.5rem; align-items: flex-end;">
+            <div style="display: flex; gap: 0.5rem;">
+                <button type="button" onclick="triggerEmergency()" style="background: #000; color: #fff; border: none; font-weight: 800;"><i class="fas fa-life-ring" aria-hidden="true"></i> Need help now (reminder)</button>
+            </div>
+            <div style="display: flex; gap: 0.5rem; font-size: 0.8rem;">
+                <a id="share-parent" class="btn-secondary" style="padding: 0.4rem 0.9rem;">Email summary to parent</a>
+                <a id="share-therapist" class="btn-secondary" style="padding: 0.4rem 0.9rem;">Email summary to therapist</a>
+            </div>
+        </div>
+    </div>
+
+    <div id="emergency-alert" class="glass-panel" role="dialog" aria-modal="true" aria-labelledby="emergency-title" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 9999; border: 5px solid #000; background: #fff; width: 90%; max-width: 500px; text-align: center; box-shadow: 0 0 50px rgba(0,0,0,0.5);">
+        <h1 id="emergency-title" style="color: #000; font-size: 2rem; margin-bottom: 1rem;">Stay with the person</h1>
+        <p style="font-size: 1.05rem; margin-bottom: 1.5rem;">This app does not call emergency services. If someone is unsafe, please dial your local emergency number <strong>(e.g., 112 in India)</strong>. Otherwise, reduce demands, offer a quiet space, and follow your family or school safety plan.</p>
+        <button type="button" onclick="document.getElementById('emergency-alert').style.display='none'" class="btn-primary" style="width: 100%;">Close</button>
+    </div>
+
+    <!-- 2. KPI Overview -->
+    <div class="kpi-grid">
+        <div class="kpi-card">
+            <div class="kpi-label">Total Sessions</div>
+            <div class="kpi-value">{{ total_sessions }}</div>
+            <div class="kpi-trend trend-neutral">Lifetime activity count</div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-label">Learning streak</div>
+            <div class="kpi-value">{{ streak }}</div>
+            <div class="kpi-trend trend-neutral">Days with login or activity</div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-label">Recent average score</div>
+            <div class="kpi-value">{% if traj_avg is not none %}{{ traj_avg }}%{% else %}—{% endif %}</div>
+            <div class="kpi-trend trend-neutral">From days with logged scores</div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-label">Gentle focus area</div>
+            <div class="kpi-value" style="font-size: 1.25rem;">{{ lowest_domain }}</div>
+            <div class="kpi-trend trend-neutral">Lowest domain average so far</div>
+        </div>
+    </div>
+
+    <div class="recommendation-alert" role="region" aria-label="Suggested focus from activity data">
+        <strong>Suggested focus (from scores only):</strong> {{ recommendation }}
+    </div>
+
+    <!-- 3. Smart Therapy Recommendation System -->
+    <div class="smart-rec-panel">
+        <div class="smart-rec-icon">
+            {% if smart_rec.type == 'Support' %}<i class="fas fa-hand-holding-heart"></i>
+            {% elif smart_rec.type == 'Urgent' %}<i class="fas fa-exclamation-triangle"></i>
+            {% elif smart_rec.type == 'Attention' %}<i class="fas fa-lightbulb"></i>
+            {% elif smart_rec.type == 'Focus' %}<i class="fas fa-bullseye"></i>
+            {% else %}<i class="fas fa-check-circle"></i>{% endif %}
+        </div>
+        <div class="smart-rec-content">
+            <span class="smart-rec-badge type-{{ smart_rec.type }}">{{ smart_rec.type }}</span>
+            <h2 class="smart-rec-title">{{ smart_rec.title }}</h2>
+            <p class="smart-rec-desc">{{ smart_rec.suggestion }}</p>
+            <div class="smart-rec-actions">
+                {% if smart_rec.action_endpoint %}
+                <a href="{{ url_for(smart_rec.action_endpoint) }}" class="btn-primary" style="padding: 0.5rem 1.5rem; text-decoration: none; display: inline-block;">{{ smart_rec.action }}</a>
+                {% else %}
+                <button type="button" class="btn-primary" style="padding: 0.5rem 1.5rem;">{{ smart_rec.action }}</button>
+                {% endif %}
+                <a href="{{ url_for('parent_support') }}" class="btn-secondary" style="padding: 0.5rem 1.5rem; text-decoration: none; display: inline-block;">Parent support resources</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Informal wellness snapshot (not medical) -->
+    <div class="grid-2 mb-2" style="gap: 1.5rem;">
+        <div class="glass-card" style="border-left: 4px solid #000;">
+            <h3 class="mb-2"><i class="fas fa-heart-pulse" aria-hidden="true"></i> Wellness snapshot (informal)</h3>
+            <p style="font-size: 0.8rem; color: #64748b; margin: 0 0 1rem 0;">{{ wellness_disclaimer }}</p>
+            <div id="prediction-status">
+                <p class="text-muted">Reading recent journal and activity signals…</p>
+            </div>
+            <button type="button" onclick="runPrediction()" class="btn-secondary mt-2" style="width: 100%;">Refresh snapshot</button>
+        </div>
+        <div class="glass-card" style="border-left: 4px solid #000;">
+            <h3 class="mb-2"><i class="fas fa-bell" aria-hidden="true"></i> Reminders</h3>
+            <div id="alerts-container">
+                <p class="text-muted" style="font-size: 0.9rem;">No automated alerts. Use journal entries and your own observations for important changes.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- 4. Advanced Analytics & Visualizations -->
+    <div class="analytics-grid" style="margin-bottom: 2rem;">
+        <!-- Skill Profile Radar -->
+        <div class="section-card">
+            <h3 class="mb-2"><i class="fas fa-bullseye"></i> Proficiency Profile</h3>
+            <div style="height: 280px;">
+                <canvas id="domainRadar"></canvas>
+            </div>
+        </div>
+
+        <!-- Learning Trajectory -->
+        <div class="section-card">
+            <h3 class="mb-2"><i class="fas fa-chart-line"></i> Performance Trajectory</h3>
+            <div style="height: 280px;">
+                <canvas id="trajectoryChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div class="analytics-grid" style="margin-bottom: 2rem;">
+        <!-- Emotional Trends -->
+        <div class="section-card">
+            <h3 class="mb-2"><i class="fas fa-smile-beam"></i> Emotional Trends (Mood & Stress)</h3>
+            <div style="height: 280px;">
+                <canvas id="emotionChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Journal + activity patterns (informal) -->
+        <div class="section-card">
+             <h3 class="mb-2"><i class="fas fa-seedling"></i> Mood &amp; activity patterns</h3>
+             <p style="font-size: 0.8rem; color: #64748b; margin: 0 0 0.75rem 0;">{{ wellness_disclaimer }}</p>
+             {% if prediction %}
+             <div style="padding: 1rem; background: #f9fafb; border-radius: 8px; border-left: 4px solid #000;">
+                 <div style="font-weight: 800; font-size: 1.05rem; margin-bottom: 0.5rem;">Latest wellness label: {{ prediction.predicted_state }}</div>
+                 <p style="font-size: 0.85rem; color: #6b7280; line-height: 1.6;">{{ prediction.reasoning }}</p>
+                 <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #e5e7eb; font-size: 0.8rem;">
+                     <strong>Ideas that may help:</strong> {{ prediction.remedy_suggestion }}
+                 </div>
+             </div>
+             {% else %}
+             <p class="text-muted">No snapshot yet. Add a journal entry or use &ldquo;Refresh snapshot&rdquo; above after a few activities.</p>
+             {% endif %}
+             
+             <div style="margin-top: 1.5rem;">
+                 <div style="font-size: 0.75rem; font-weight: 800; color: #6b7280; text-transform: uppercase;">Recent Sensory Markers</div>
+                 <div style="display: flex; gap: 1rem; margin-top: 0.5rem;">
+                     {% for log in sensory_logs[:3] %}
+                     <div style="flex: 1; padding: 0.5rem; background: #fff; border: 1px solid var(--border); border-radius: 6px; font-size: 0.7rem;">
+                         <strong>{{ log.timestamp.strftime('%H:%M') }}</strong><br>
+                         Noise: {{ log.noise_level }}dB<br>
+                         Trigger: {{ 'Yes' if log.trigger_detected else 'No' }}
+                     </div>
+                     {% endfor %}
+                 </div>
+             </div>
+        </div>
+    </div>
+
+    <!-- 4. Educational Video Recommendation System -->
+    <div class="section-card">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+            <div>
+                <h2 style="font-size: 1.5rem; font-weight: 800; color: #000; margin: 0;"><i class="fas fa-video"></i> Curated family resources</h2>
+                <p style="font-size: 0.9rem; color: #6b7280; margin: 0.25rem 0 0 0;">Optional videos—choose what fits your family; this is not professional advice.</p>
+            </div>
+            <div class="video-filters" style="display: flex; gap: 0.5rem;">
+                <button type="button" onclick="filterVideos('all', this)" class="btn-filter active" id="filter-all">All</button>
+                <button type="button" onclick="filterVideos('Social', this)" class="btn-filter">Social Skills</button>
+                <button type="button" onclick="filterVideos('Communication', this)" class="btn-filter">Communication</button>
+                <button type="button" onclick="filterVideos('Calming', this)" class="btn-filter">Calming</button>
+            </div>
+        </div>
+
+        <div class="video-grid" id="video-grid">
+            {% for video in videos %}
+            <div class="video-embed-card" data-category="{{ video.category }}">
+                <div class="video-container">
+                    <iframe src="https://www.youtube.com/embed/{{ video.id }}" 
+                            title="YouTube video player" 
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                            allowfullscreen></iframe>
+                </div>
+                <div class="video-info">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem;">
+                        <h4>{{ video.title }}</h4>
+                        <span class="status-badge status-neutral" style="font-size: 0.65rem;">{{ video.category }}</span>
+                    </div>
+                    <p>{{ video.desc }}</p>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- 5. Detailed Activity Log -->
+    <div class="section-card">
+        <div class="section-title">Recent activity</div>
+        <table class="clinical-table">
+            <thead>
+                <tr>
+                    <th>Timestamp</th>
+                    <th>Module / Activity</th>
+                    <th>Metric (Score)</th>
+                    <th>Notes / details</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for log in logs[:10] %}
+                <tr>
+                    <td>{{ log.timestamp.strftime('%Y-%m-%d %H:%M') }}</td>
+                    <td style="font-weight: 500;">{{ log.activity_type }}</td>
+                    <td>
+                        {% if log.score %}
+                        {{ log.score }}%
+                        {% else %}
+                        --
+                        {% endif %}
+                    </td>
+                    <td style="color: #64748b;">{{ log.details or 'Session completed' }}</td>
+                    <td>
+                        {% if log.score and log.score >= 80 %}
+                        <span class="status-badge status-optimal">Mastery</span>
+                        {% elif log.score and log.score < 50 %} <span class="status-badge status-attention">
+                            Review</span>
+                            {% else %}
+                            <span class="status-badge status-neutral">Active</span>
+                            {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+</div>
+
+<script>
+    // 1. Domain Radar Chart (guard against missing canvas)
+    const radarCanvas = document.getElementById('domainRadar');
+    if (radarCanvas) {
+        const radarCtx = radarCanvas.getContext('2d');
+        const radarData = JSON.parse('{{ radar_data| tojson | safe }}');
+
+        new Chart(radarCtx, {
+            type: 'radar',
+            data: {
+                labels: Object.keys(radarData),
+                datasets: [{
+                    label: 'Proficiency Score',
+                    data: Object.values(radarData),
+                    backgroundColor: 'rgba(59, 130, 246, 0.2)',
+                    borderColor: '#3b82f6',
+                    pointBackgroundColor: '#3b82f6',
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                maintainAspectRatio: false,
+                scales: {
+                    r: {
+                        angleLines: { color: '#e2e8f0' },
+                        grid: { color: '#e2e8f0' },
+                        pointLabels: {
+                            font: { size: 11, family: 'Inter' },
+                            color: '#64748b'
+                        },
+                        suggestedMin: 0,
+                        suggestedMax: 100
+                    }
+                },
+                plugins: {
+                    legend: { display: false }
+                }
+            }
+        });
+    }
+
+    // 2. Trajectory Line Chart
+    const lineCtx = document.getElementById('trajectoryChart').getContext('2d');
+    const lineLabels = JSON.parse('{{ trajectory_labels| tojson | safe }}');
+    const lineData = JSON.parse('{{ trajectory_data| tojson | safe }}');
+
+    new Chart(lineCtx, {
+        type: 'line',
+        data: {
+            labels: lineLabels,
+            datasets: [{
+                label: 'Performance Index',
+                data: lineData,
+                borderColor: '#10b981',
+                backgroundColor: 'rgba(16, 185, 129, 0.05)',
+                borderWidth: 2,
+                tension: 0.3,
+                fill: true,
+                pointRadius: 3,
+                pointHoverRadius: 5
+            }]
+        },
+        options: {
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    backgroundColor: '#10b981',
+                    padding: 12,
+                    displayColors: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 100,
+                    grid: { color: '#f1f5f9' },
+                    ticks: { color: '#94a3b8' }
+                },
+                x: {
+                    grid: { display: false },
+                    ticks: { color: '#94a3b8' }
+                }
+            }
+        }
+    });
+
+    // 3. Emotional Trends Chart
+    const emotionCtx = document.getElementById('emotionChart').getContext('2d');
+    const moodLabels = JSON.parse('{{ mood_labels | tojson | safe }}');
+    const moodData = JSON.parse('{{ mood_data | tojson | safe }}');
+    const stressData = JSON.parse('{{ stress_data | tojson | safe }}');
+
+    new Chart(emotionCtx, {
+        type: 'line',
+        data: {
+            labels: moodLabels,
+            datasets: [
+                {
+                    label: 'Mood Level (1-4)',
+                    data: moodData,
+                    borderColor: '#000',
+                    backgroundColor: 'transparent',
+                    borderWidth: 3,
+                    tension: 0.4,
+                    yAxisID: 'yMood'
+                },
+                {
+                    label: 'Stress Level (1-5)',
+                    data: stressData,
+                    borderColor: '#ef4444',
+                    backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                    borderWidth: 2,
+                    borderDash: [5, 5],
+                    tension: 0.4,
+                    fill: true,
+                    yAxisID: 'yStress'
+                }
+            ]
+        },
+        options: {
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { 
+                    position: 'bottom',
+                    labels: { boxWidth: 12, font: { size: 10, weight: '800' } }
+                }
+            },
+            scales: {
+                yMood: {
+                    type: 'linear',
+                    display: true,
+                    position: 'left',
+                    min: 1,
+                    max: 4,
+                    ticks: {
+                        stepSize: 1,
+                        callback: function(value) {
+                            return ['Anxious', 'Sad', 'Neutral', 'Happy'][value-1];
+                        },
+                        color: '#000',
+                        font: { weight: '800', size: 9 }
+                    }
+                },
+                yStress: {
+                    type: 'linear',
+                    display: true,
+                    position: 'right',
+                    min: 1,
+                    max: 5,
+                    grid: { display: false },
+                    ticks: { color: '#ef4444', font: { weight: '800', size: 9 } }
+                }
+            }
+        }
+    });
+
+    async function runPrediction() {
+        const container = document.getElementById('prediction-status');
+        container.innerHTML = '<p class="text-muted">Reading journal and activity signals…</p>';
+        
+        try {
+            const resp = await fetch('/api/predict_behavior', { method: 'POST' });
+            const data = await resp.json();
+            const label = data.wellness_signal || data.prediction;
+            const detail = data.interpretation || data.reasoning;
+            const actions = data.suggested_actions || data.remedy;
+            const disclaimer = data.disclaimer || '';
+            
+            container.innerHTML = `
+                <div style="font-size: 1.15rem; font-weight: 700; color: #000;">${label}</div>
+                <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.5rem;">${detail}</p>
+                <div style="margin-top: 0.8rem; padding: 0.5rem; background: #f3f4f6; border-radius: 4px; font-size: 0.85rem;">
+                    <strong>Ideas:</strong> ${actions}
+                </div>
+                <p style="font-size: 0.72rem; color: #64748b; margin-top: 0.75rem; line-height: 1.4;">${disclaimer}</p>
+            `;
+        } catch (e) {
+            container.innerHTML = '<p class="text-error">Could not refresh snapshot. Please try again.</p>';
+        }
+    }
+    function triggerEmergency() {
+        const modal = document.getElementById('emergency-alert');
+        modal.style.display = 'block';
+        // Simulation: Play alert sound
+        const audio = new Audio('https://www.soundjay.com/misc/sounds/bell-ringing-05.mp3');
+        audio.play();
+    }
+
+    // Simple email share links (parent / therapist can adjust the addresses)
+    const summarySubject = encodeURIComponent('Progress snapshot from ALP PRO (informal)');
+    const summaryBody = encodeURIComponent('Here is an informal progress snapshot from our Autism Learning Platform. Numbers are from in-app activity only—not a diagnosis. Log in for full charts and notes.\n\nDiscuss any concerns with your school, clinician, or care team.');
+    const parentLink = document.getElementById('share-parent');
+    const therapistLink = document.getElementById('share-therapist');
+    if (parentLink) {
+        parentLink.href = `mailto:?subject=${summarySubject}&body=${summaryBody}`;
+    }
+    if (therapistLink) {
+        therapistLink.href = `mailto:?subject=${summarySubject}&body=${summaryBody}`;
+    }
+
+    function filterVideos(category, btn) {
+        const cards = document.querySelectorAll('.video-embed-card');
+        const buttons = document.querySelectorAll('.btn-filter');
+        
+        buttons.forEach(b => b.classList.remove('active'));
+        if (btn) btn.classList.add('active');
+
+        cards.forEach(card => {
+            if (category === 'all' || card.getAttribute('data-category') === category) {
+                card.style.display = 'block';
+            } else {
+                card.style.display = 'none';
+            }
+        });
+    }
+
+    runPrediction();
+</script>
+{% endblock %}

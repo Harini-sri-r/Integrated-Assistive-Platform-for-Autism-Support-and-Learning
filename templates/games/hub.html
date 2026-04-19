@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="text-center mb-2">
+    <h1>Game Hub</h1>
+    <p class="text-muted">Learn while having fun!</p>
+</div>
+
+<div class="grid-2" style="grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));">
+    <!-- Featured Hero Game -->
+    <div class="glass-card"
+        style="grid-column: 1 / -1; background: linear-gradient(135deg, rgba(99,102,241,0.3) 0%, rgba(168,85,247,0.3) 100%); display: flex; align-items: center; gap: 2rem; padding: 2.5rem; border: 2px solid var(--accent); position: relative; overflow: hidden;">
+        <div style="font-size: 8rem;">🗺️</div>
+        <div style="flex: 1;">
+            <div class="mb-1"
+                style="display: inline-block; background: var(--accent); color: white; padding: 0.2rem 0.8rem; border-radius: 20px; font-size: 0.8rem; font-weight: bold; text-transform: uppercase;">
+                New Adventure</div>
+            <h1 style="font-size: 2.5rem;">The Social Quest</h1>
+            <p style="font-size: 1.2rem; opacity: 0.8;">A multi-stage adventure where YOU are the hero. Make choices,
+                help others, and earn massive XP!</p>
+            <a href="{{ url_for('games_social_quest') }}" class="btn-primary"
+                style="margin-top: 1rem; padding: 1rem 2rem; font-size: 1.2rem;">Start Your Journey</a>
+        </div>
+        <div
+            style="position: absolute; right: -20px; bottom: -20px; font-size: 12rem; opacity: 0.1; transform: rotate(-15deg);">
+            🛡️</div>
+    </div>
+    <div class="glass-card" style="text-align: center;">
+        <div style="font-size: 4rem; margin-bottom: 1rem;">🎭</div>
+        <h2>Emotion Matcher</h2>
+        <p class="mb-2">Find the matching feelings!</p>
+        <a href="{{ url_for('emotion_matcher') }}" class="btn-primary">Play</a>
+    </div>
+
+    <!-- Routine Builder -->
+    <div class="glass-card" style="text-align: center;">
+        <div style="font-size: 4rem; margin-bottom: 1rem;">📅</div>
+        <h2>Daily Routine</h2>
+        <p class="mb-2">Build your morning schedule.</p>
+        <a href="{{ url_for('routine_builder') }}" class="btn-primary">Play</a>
+    </div>
+
+    <!-- Drawing -->
+    <div class="glass-card" style="text-align: center;">
+        <div style="font-size: 4rem; margin-bottom: 1rem;">🎨</div>
+        <h2>Creative Studio</h2>
+        <p class="mb-2">Draw and trace letters!</p>
+        <a href="{{ url_for('drawing_game') }}" class="btn-primary">Play</a>
+    </div>
+
+    <!-- Scenarios -->
+    <div class="glass-card" style="text-align: center;">
+        <div style="font-size: 4rem; margin-bottom: 1rem;">🤔</div>
+        <h2>Social Adventure</h2>
+        <p class="mb-2">What would you do?</p>
+        <a href="{{ url_for('scenarios_game') }}" class="btn-primary">Play</a>
+    </div>
+
+    <!-- Sorting -->
+    <div class="glass-card" style="text-align: center;">
+        <div style="font-size: 4rem; margin-bottom: 1rem;">🗑️</div>
+        <h2>Sorting Master</h2>
+        <p class="mb-2">Sort healthy vs unhealthy food.</p>
+        <a href="{{ url_for('sorting_game') }}" class="btn-primary">Play</a>
+    </div>
+
+    <!-- Memory Match -->
+    <div class="glass-card" style="text-align: center;">
+        <div style="font-size: 4rem; margin-bottom: 1rem;">🧩</div>
+        <h2>Memory Match</h2>
+        <p class="mb-2">Exercise your visual memory!</p>
+        <a href="{{ url_for('memory_match') }}" class="btn-primary">Play</a>
+    </div>
+
+    <!-- Magic Storybook -->
+    <div class="glass-card" style="text-align: center; border: 1px solid var(--accent);">
+        <div style="font-size: 4rem; margin-bottom: 1rem;">📖</div>
+        <div class="mb-1"
+            style="background: var(--accent); color: white; padding: 0.1rem 0.5rem; border-radius: 10px; font-size: 0.7rem; display: inline-block;">
+            XP+ REWARD</div>
+        <h2>Magic Storybook</h2>
+        <p class="mb-2">Write your own adventure!</p>
+        <a href="{{ url_for('learning_magic_storybook') }}" class="btn-primary">Write</a>
+    </div>
+
+    <!-- Fruit & Veggie Sorter -->
+    <div class="glass-card" style="text-align: center;">
+        <div style="font-size: 4rem; margin-bottom: 1rem;">🍎</div>
+        <h2>Fruit & Veggie Sorter</h2>
+        <p class="mb-2">Master your food categories!</p>
+        <a href="{{ url_for('sorting_master') }}" class="btn-primary">Play</a>
+    </div>
+
+    <!-- Color Matcher -->
+    <div class="glass-card" style="text-align: center;">
+        <div style="font-size: 4rem; margin-bottom: 1rem;">🌈</div>
+        <h2>Color Matcher</h2>
+        <p class="mb-2">Match colors and names!</p>
+        <a href="{{ url_for('color_matcher') }}" class="btn-primary">Play</a>
+    </div>
+
+    <!-- Pattern Master -->
+    <div class="glass-card" style="text-align: center;">
+        <div style="font-size: 4rem; margin-bottom: 1rem;">🏁</div>
+        <h2>Pattern Master</h2>
+        <p class="mb-2">What comes next? Train logic!</p>
+        <a href="{{ url_for('pattern_logic') }}" class="btn-primary">Play</a>
+    </div>
+
+    <!-- Math Magic -->
+    <div class="glass-card" style="text-align: center;">
+        <div style="font-size: 4rem; margin-bottom: 1rem;">🔢</div>
+        <div class="mb-1"
+            style="background: #fbbf24; color: black; padding: 0.1rem 0.5rem; border-radius: 10px; font-size: 0.7rem; display: inline-block;">
+            LOGIC XP</div>
+        <h2>Math Magic</h2>
+        <p class="mb-2">Emoji counting puzzles!</p>
+        <a href="{{ url_for('learning_math_magic') }}" class="btn-primary">Play</a>
+    </div>
+
+    <!-- Weather Matcher -->
+    <div class="glass-card" style="text-align: center;">
+        <div style="font-size: 4rem; margin-bottom: 1rem;">🌦️</div>
+        <h2>Weather Matcher</h2>
+        <p class="mb-2">Dress for the day!</p>
+        <a href="{{ url_for('learning_weather_matcher') }}" class="btn-primary">Play</a>
+    </div>
+</div>
+{% endblock %}

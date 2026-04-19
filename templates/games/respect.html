@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="text-center mb-4">
+    <h1 class="gradient-text">Respectful Learner</h1>
+    <p>What would a respectful friend do?</p>
+</div>
+
+<div class="glass-panel"
+    style="max-width: 800px; margin: 0 auto; min-height: 500px; display: flex; flex-direction: column; justify-content: space-between;">
+
+    <!-- Scenario Display -->
+    <div id="scenario-container" class="text-center" style="padding: 2rem;">
+        <div id="scenario-image" style="font-size: 6rem; margin-bottom: 2rem;">🤔</div>
+        <h2 id="scenario-text" style="font-size: 2rem; margin-bottom: 2rem;">Loading...</h2>
+    </div>
+
+    <!-- Options -->
+    <div id="options-container" style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; padding: 2rem;">
+        <button id="opt-1" class="btn-secondary" style="height: 150px; font-size: 1.2rem; white-space: normal;"
+            onclick="checkAnswer(0)"></button>
+        <button id="opt-2" class="btn-secondary" style="height: 150px; font-size: 1.2rem; white-space: normal;"
+            onclick="checkAnswer(1)"></button>
+    </div>
+
+    <!-- Feedback -->
+    <div id="feedback" class="text-center" style="padding: 1rem; font-size: 1.5rem; height: 80px;"></div>
+
+    <div class="text-center mb-4">
+        <button id="btn-next" class="btn-primary" style="display: none; padding: 1rem 3rem;"
+            onclick="loadScenario()">Next Scenario <i class="fas fa-arrow-right"></i></button>
+    </div>
+</div>
+
+<script>
+    const scenarios = [
+        {
+            text: "Your friend is talking about their favorite toy.",
+            emoji: "🗣️",
+            options: ["Interrupt them to talk about your toy.", "Listen quietly and ask questions."],
+            correct: 1,
+            feedback: "Correct! Listening shows respect for your friend's feelings."
+        },
+        {
+            text: "You want to play with a toy that someone else is using.",
+            emoji: "🧸",
+            options: ["Grab it from them quickly.", "Ask politely 'Can I play next?'"],
+            correct: 1,
+            feedback: "Exactly! Asking nicely is the respectful way to share."
+        },
+        {
+            text: "You accidentally bumped into someone.",
+            emoji: "💥",
+            options: ["Say 'I'm sorry, are you okay?'", "Run away without saying anything."],
+            correct: 0,
+            feedback: "Yes! Apologizing shows you care about others' safety."
+        },
+        {
+            text: "The teacher is explaining a new game.",
+            emoji: "👩‍🏫",
+            options: ["Talk to your neighbor.", "Look at the teacher and listen."],
+            correct: 1,
+            feedback: "Right! Listening to the teacher is respectful and helps you learn."
+        },
+        {
+            text: "Someone gives you a gift you don't like very much.",
+            emoji: "🎁",
+            options: ["Say 'Thank you'.", "Say 'I don't like this.'"],
+            correct: 0,
+            feedback: "Correct. Saying 'Thank you' shows gratitude for their kindness."
+        }
+    ];
+
+    let currentScenario = null;
+
+    function loadScenario() {
+        // Pick random
+        currentScenario = scenarios[Math.floor(Math.random() * scenarios.length)];
+
+        document.getElementById('scenario-text').innerText = currentScenario.text;
+        document.getElementById('scenario-image').innerText = currentScenario.emoji;
+
+        const btn1 = document.getElementById('opt-1');
+        const btn2 = document.getElementById('opt-2');
+
+        btn1.innerText = currentScenario.options[0];
+        btn2.innerText = currentScenario.options[1];
+
+        // Reset styles
+        btn1.className = 'glass-card btn-secondary';
+        btn2.className = 'glass-card btn-secondary';
+        btn1.disabled = false;
+        btn2.disabled = false;
+
+        document.getElementById('feedback').innerText = '';
+        document.getElementById('btn-next').style.display = 'none';
+    }
+
+    function checkAnswer(index) {
+        const btns = [document.getElementById('opt-1'), document.getElementById('opt-2')];
+
+        if (index === currentScenario.correct) {
+            btns[index].className = 'glass-card btn-primary'; // Greenish via CSS logic usually, or just btn-primary
+            btns[index].style.background = 'var(--success-color, #4ade80)';
+            document.getElementById('feedback').innerHTML = '<span style="color:#4ade80">' + currentScenario.feedback + '</span>';
+
+            // Log
+            fetch('/api/log_activity', {
+                method: 'POST', body: JSON.stringify({ type: 'Respect Game', score: 10, details: currentScenario.text }),
+                headers: { 'Content-Type': 'application/json' }
+            });
+
+            document.getElementById('btn-next').style.display = 'inline-block';
+        } else {
+            btns[index].className = 'glass-card';
+            btns[index].style.background = 'var(--error-color, #f87171)';
+            document.getElementById('feedback').innerHTML = '<span style="color:#f87171">Not quite. Try the other option.</span>';
+        }
+    }
+
+    // Init
+    loadScenario();
+</script>
+{% endblock %}

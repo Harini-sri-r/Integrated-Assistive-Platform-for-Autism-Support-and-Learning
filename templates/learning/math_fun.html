@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="text-center mb-2">
+    <h1>Math Magic: Counting & Adding</h1>
+    <p class="text-muted">Let's solve some fun emoji puzzles! Use the visuals to help you count.</p>
+</div>
+
+<div class="glass-panel" style="max-width: 800px; margin: 0 auto; padding: 2rem; text-align: center;">
+    <div id="game-stats" class="d-flex justify-content-between mb-3">
+        <span>Score: <span id="score">0</span></span>
+        <span>Puzzle <span id="current-puzzle-num">1</span> of 5</span>
+    </div>
+
+    <div id="math-display" class="glass-card mb-4"
+        style="padding: 3rem; display: flex; justify-content: center; align-items: center; gap: 1.5rem; font-size: 3.5rem; font-weight: bold;">
+        <div id="part-1"
+            style="display: flex; gap: 0.5rem; flex-wrap: wrap; max-width: 200px; justify-content: center;"></div>
+        <span>+</span>
+        <div id="part-2"
+            style="display: flex; gap: 0.5rem; flex-wrap: wrap; max-width: 200px; justify-content: center;"></div>
+        <span>=</span>
+        <div
+            style="border: 3px dashed var(--accent); border-radius: 12px; width: 100px; height: 100px; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.1);">
+            ?</div>
+    </div>
+
+    <div id="options-grid" class="grid-3 mb-4"
+        style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; max-width: 500px; margin: 0 auto;">
+        <!-- Number options -->
+    </div>
+
+    <div id="feedback" class="mt-4" style="min-height: 50px; font-size: 1.5rem; font-weight: bold;"></div>
+</div>
+
+<script>
+    const puzzles = [
+        { n1: 2, n2: 1, emoji: "🦒", options: [2, 3, 4] },
+        { n1: 3, n2: 2, emoji: "🚀", options: [4, 5, 6] },
+        { n1: 4, n2: 1, emoji: "🍦", options: [3, 5, 7] },
+        { n1: 2, n2: 2, emoji: "🚲", options: [4, 5, 8] },
+        { n1: 5, n2: 3, emoji: "⭐", options: [6, 7, 8] }
+    ];
+
+    let currentIdx = 0;
+    let score = 0;
+
+    function loadPuzzle() {
+        const p = puzzles[currentIdx];
+        document.getElementById('current-puzzle-num').innerText = currentIdx + 1;
+
+        const div1 = document.getElementById('part-1');
+        const div2 = document.getElementById('part-2');
+        div1.innerHTML = Array(p.n1).fill(`<span style="font-size: 2.5rem">${p.emoji}</span>`).join('');
+        div2.innerHTML = Array(p.n2).fill(`<span style="font-size: 2.5rem">${p.emoji}</span>`).join('');
+
+        const grid = document.getElementById('options-grid');
+        grid.innerHTML = p.options.sort(() => Math.random() - 0.5).map(num => `
+            <button onclick="checkAnswer(${num})" class="btn-secondary" style="font-size: 2rem; padding: 1.5rem;">${num}</button>
+        `).join('');
+
+        document.getElementById('feedback').innerText = "";
+    }
+
+    async function checkAnswer(choice) {
+        const correct = puzzles[currentIdx].n1 + puzzles[currentIdx].n2;
+        const feedback = document.getElementById('feedback');
+
+        if (choice === correct) {
+            feedback.innerHTML = '<span style="color: #4ade80">Spot on! Excellent counting! ✨</span>';
+            score += 20;
+            document.getElementById('score').innerText = score;
+        } else {
+            feedback.innerHTML = `<span style="color: #f87171">Not quite! Count the ${puzzles[currentIdx].emoji} again. ❌</span>`;
+        }
+
+        setTimeout(() => {
+            currentIdx++;
+            if (currentIdx < puzzles.length) {
+                loadPuzzle();
+            } else {
+                finishGame();
+            }
+        }, 1800);
+    }
+
+    async function finishGame() {
+        document.getElementById('math-display').parentElement.innerHTML = `
+            <div class="glass-card" style="padding: 3rem;">
+                <h2 style="font-size: 3rem;">Math Wizard!</h2>
+                <p style="font-size: 1.5rem; margin: 1rem 0;">You solved all the emoji puzzles!</p>
+                <div style="font-size: 5rem;">🔢✨🏆</div>
+                <button class="btn-primary mt-2" onclick="window.location.href='/learning'">Back to Hub</button>
+            </div>
+        `;
+
+        await fetch('/api/log_activity', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                type: 'Memory / Logic',
+                score: score,
+                details: 'Solved basic addition puzzles using visual counters.'
+            })
+        });
+    }
+
+    loadPuzzle();
+</script>
+{% endblock %}

@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+
+{% block head %}
+<style>
+    .face-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        gap: 1.5rem;
+        margin: 2rem 0;
+    }
+
+    .face-card {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 12px;
+        padding: 1.5rem;
+        transition: all 0.3s;
+    }
+
+    .face-card:hover {
+        background: rgba(255, 255, 255, 0.08);
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+    }
+
+    .face-icon {
+        font-size: 3rem;
+        color: var(--accent);
+        margin-bottom: 1rem;
+    }
+
+    .face-label {
+        font-size: 1.1rem;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+    }
+
+    .face-timestamp {
+        font-size: 0.9rem;
+        color: var(--text-muted);
+        margin-bottom: 1rem;
+    }
+
+    .delete-btn {
+        background: rgba(239, 68, 68, 0.2);
+        color: #f87171;
+        border: 1px solid #f87171;
+        padding: 0.5rem 1rem;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.3s;
+        width: 100%;
+    }
+
+    .delete-btn:hover {
+        background: rgba(239, 68, 68, 0.3);
+        transform: scale(1.05);
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 3rem;
+        color: var(--text-muted);
+    }
+
+    .empty-state i {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+        opacity: 0.5;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="glass-panel">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+        <h1>Manage Registered Faces</h1>
+        <a href="{{ url_for('face_register_page') }}" class="btn-primary">
+            <i class="fas fa-plus"></i> Register New Face
+        </a>
+    </div>
+
+    {% if descriptors %}
+    <div class="face-grid" id="face-grid">
+        {% for descriptor in descriptors %}
+        <div class="face-card" data-face-id="{{ descriptor.id }}">
+            <div class="face-icon">
+                <i class="fas fa-user-circle"></i>
+            </div>
+            <div class="face-label">{{ descriptor.label }}</div>
+            <div class="face-timestamp">
+                Registered: {{ descriptor.timestamp.strftime('%b %d, %Y at %I:%M %p') }}
+            </div>
+            <button class="delete-btn" data-delete-id="{{ descriptor.id }}">
+                <i class="fas fa-trash"></i> Delete
+            </button>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <i class="fas fa-face-frown"></i>
+        <h2>No Faces Registered</h2>
+        <p>You haven't registered any faces yet. Click the button above to get started!</p>
+    </div>
+    {% endif %}
+
+    <div class="mt-2" style="text-align: center;">
+        <a href="{{ url_for('dashboard') }}" class="btn-secondary">
+            <i class="fas fa-arrow-left"></i> Back to Dashboard
+        </a>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/face_manage.js') }}"></script>
+{% endblock %}

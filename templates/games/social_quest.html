@@ -1,0 +1,203 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="text-center mb-2">
+    <h1>The Social Quest: Hero's Journey</h1>
+    <p class="text-muted">Explore the world and make friendly choices to level up!</p>
+</div>
+
+<div class="glass-panel"
+    style="max-width: 900px; margin: 0 auto; padding: 0; min-height: 500px; display: flex; flex-direction: column; overflow: hidden; border-radius: 24px;">
+    <!-- Scene Background -->
+    <div id="scene-bg"
+        style="height: 350px; background-size: cover; background-position: center; position: relative; transition: all 1s ease;">
+        <div
+            style="position: absolute; inset: 0; background: linear-gradient(0deg, rgba(0,0,0,0.8) 0%, transparent 50%);">
+        </div>
+
+        <!-- Character Avatar -->
+        <div id="character"
+            style="position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); text-align: center;">
+            <div id="char-emoji" style="font-size: 5rem; text-shadow: 0 5px 15px rgba(0,0,0,0.5);">👦</div>
+            <div id="char-speech" class="glass-card"
+                style="padding: 0.5rem 1rem; margin-bottom: 0.5rem; display: none; background: white; color: black; border-radius: 15px;">
+                ...</div>
+        </div>
+
+        <!-- Quest Status -->
+        <div style="position: absolute; top: 20px; left: 20px;">
+            <div class="glass-card" style="padding: 0.5rem 1rem; font-weight: bold; background: rgba(0,0,0,0.5);">
+                <i class="fas fa-map-marked-alt text-accent"></i> <span id="location-name">School Gates</span>
+            </div>
+        </div>
+        <div style="position: absolute; top: 20px; right: 20px;">
+            <div class="glass-card"
+                style="padding: 0.5rem 1rem; font-weight: bold; background: rgba(0,0,0,0.5); color: #facc15;">
+                <i class="fas fa-star"></i> Quest XP: <span id="quest-xp">0</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dialog & Choices -->
+    <div
+        style="padding: 2rem; flex: 1; display: flex; flex-direction: column; gap: 1.5rem; background: rgba(255,255,255,0.05);">
+        <div id="dialog-text" style="font-size: 1.3rem; line-height: 1.6; font-weight: 500;">
+            Welcome to the Social Quest! Your adventure starts at the school gates. You see a friend looking a little
+            sad. What should you do?
+        </div>
+
+        <div id="choice-container" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+            <!-- Choices injected here -->
+        </div>
+
+        <div id="quest-finale" style="display: none; text-align: center;">
+            <h2 style="font-size: 2.5rem; color: #4ade80;">Quest Complete! 🏆</h2>
+            <p id="finale-summary" style="font-size: 1.2rem; margin: 1rem 0;"></p>
+            <button class="btn-primary" onclick="window.location.href='/games'">Return to Hub</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const story = {
+        start: {
+            bg: "https://images.unsplash.com/photo-1542151121-50795c65d9cc?q=80&w=1000&auto=format&fit=crop",
+            location: "School Gates",
+            text: "You just arrived at school. Your friend Tim is sitting alone and looks a bit worried. He has a lot of books.",
+            choices: [
+                { text: "Wave and say 'Hi Tim! Need help?'", next: "help_tim", xp: 50 },
+                { text: "Walk past and head to class.", next: "walk_past", xp: 10 }
+            ]
+        },
+        help_tim: {
+            bg: "https://images.unsplash.com/photo-1541339907198-e08756ebafe1?q=80&w=1000&auto=format&fit=crop",
+            location: "Hallway",
+            text: "Tim smiles! 'Thanks! These books are heavy.' You both walk to the library. Now, the teacher is asking for a volunteer to clean the board.",
+            choices: [
+                { text: "Raise your hand to help.", next: "volunteer", xp: 50 },
+                { text: "Look at your desk.", next: "sit_quietly", xp: 10 }
+            ]
+        },
+        walk_past: {
+            bg: "https://images.unsplash.com/photo-1541339907198-e08756ebafe1?q=80&w=1000&auto=format&fit=crop",
+            location: "Hallway",
+            text: "You're in the hallway. Tim looks lonely back there. You feel like you could have been Kinder. The teacher is now asking for volunteers.",
+            choices: [
+                { text: "Raise your hand to help now.", next: "volunteer", xp: 40 },
+                { text: "Keep to yourself.", next: "sit_quietly", xp: 5 }
+            ]
+        },
+        volunteer: {
+            bg: "https://images.unsplash.com/photo-1588072432836-e10032774350?q=80&w=1000&auto=format&fit=crop",
+            location: "Classroom",
+            text: "Great job! The board is clean. Now the teacher says 'Who wants to share their drawing?'",
+            choices: [
+                { text: "Share your drawing proudly.", next: "share_drawing", xp: 50 },
+                { text: "Listen to your friend's story first.", next: "listen_first", xp: 60 }
+            ]
+        },
+        share_drawing: {
+            bg: "https://images.unsplash.com/photo-1497633762265-9d179a990aa6?q=80&w=1000&auto=format&fit=crop",
+            location: "Classroom",
+            text: "Everyone clapped! You feel proud. It's lunch time now. A group of kids is playing a game you like.",
+            choices: [
+                { text: "Ask 'Can I play too?'", next: "play_group", xp: 50 },
+                { text: "Invite someone else to join you.", next: "invite_friend", xp: 70 }
+            ]
+        },
+        listen_first: {
+            bg: "https://images.unsplash.com/photo-1497633762265-9d179a990aa6?q=80&w=1000&auto=format&fit=crop",
+            location: "Classroom",
+            text: "Tim shared a great story. You feel good for being a good listener. It's lunch time now!",
+            choices: [
+                { text: "Go play with Tim.", next: "play_group", xp: 50 },
+                { text: "Go to the quiet reading corner.", next: "solo_lunch", xp: 20 }
+            ]
+        },
+        invite_friend: {
+            bg: "https://images.unsplash.com/photo-1502086223501-7ea6ecd79368?q=80&w=1000&auto=format&fit=crop",
+            location: "Playground",
+            text: "You invited a new student to play! You are a Social Hero. You made their day much better!",
+            choices: [],
+            isEnd: true,
+            summary: "You went above and beyond! You didn't just play, you made sure everyone was included."
+        },
+        sit_quietly: {
+            bg: "https://images.unsplash.com/photo-1588072432836-e10032774350?q=80&w=1000&auto=format&fit=crop",
+            location: "Classroom",
+            text: "Class is quiet. It's lunch time now. You see the others laughing and playing. You feel a bit left out.",
+            choices: [
+                { text: "Go and join them!", next: "play_group", xp: 40 },
+                { text: "Read your book.", next: "solo_lunch", xp: 30 }
+            ]
+        },
+        play_group: {
+            bg: "https://images.unsplash.com/photo-1502086223501-7ea6ecd79368?q=80&w=1000&auto=format&fit=crop",
+            location: "Playground",
+            text: "They say 'YES!' You spend the whole lunch break playing and making new friends. High five!",
+            choices: [],
+            isEnd: true,
+            summary: "You were a Social Hero today! You helped friends and joined in the fun."
+        },
+        solo_lunch: {
+            bg: "https://images.unsplash.com/photo-1502086223501-7ea6ecd79368?q=80&w=1000&auto=format&fit=crop",
+            location: "Playground",
+            text: "You had a quiet lunch. It was peaceful, but you missed out on the team game. Maybe next time you'll join them!",
+            choices: [],
+            isEnd: true,
+            summary: "You had a peaceful day. Remember, it's always okay to ask to play!"
+        }
+    };
+
+    let currentXP = 0;
+
+    function loadScene(sceneKey) {
+        const scene = story[sceneKey];
+        const bg = document.getElementById('scene-bg');
+        const loc = document.getElementById('location-name');
+        const text = document.getElementById('dialog-text');
+        const container = document.getElementById('choice-container');
+
+        bg.style.backgroundImage = `url('${scene.bg}')`;
+        loc.innerText = scene.location;
+        text.innerText = scene.text;
+
+        if (scene.isEnd) {
+            container.style.display = 'none';
+            document.getElementById('quest-finale').style.display = 'block';
+            document.getElementById('finale-summary').innerText = scene.summary;
+            finishQuest();
+            return;
+        }
+
+        container.innerHTML = '';
+        scene.choices.forEach(choice => {
+            const btn = document.createElement('button');
+            btn.className = 'btn-secondary';
+            btn.style.padding = '1rem';
+            btn.style.fontSize = '1.1rem';
+            btn.innerText = choice.text;
+            btn.onclick = () => {
+                currentXP += choice.xp;
+                document.getElementById('quest-xp').innerText = currentXP;
+                loadScene(choice.next);
+            };
+            container.appendChild(btn);
+        });
+    }
+
+    async function finishQuest() {
+        await fetch('/api/log_activity', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                type: 'Social Quest',
+                score: currentXP,
+                details: 'Completed a multi-stage social choice adventure.'
+            })
+        });
+    }
+
+    loadScene('start');
+</script>
+{% endblock %}

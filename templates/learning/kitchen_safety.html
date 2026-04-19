@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="text-center mb-2">
+    <h1>Kitchen Safety</h1>
+    <p class="text-muted">Is it safe or unsafe? Choose the right answer!</p>
+</div>
+
+<div class="glass-panel" style="max-width: 700px; margin: 0 auto; padding: 2rem; text-align: center;">
+    <div id="game-area">
+        <div id="scenario-box" class="glass-card mb-4"
+            style="min-height: 300px; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 2rem;">
+            <div id="scenario-icon" style="font-size: 6rem; margin-bottom: 1.5rem;">🔥</div>
+            <h2 id="scenario-desc" style="font-size: 1.8rem; margin-bottom: 1rem;">The stove is on and a towel is near
+                it.</h2>
+            <p id="scenario-ques" style="font-size: 1.2rem; opacity: 0.8;">Is this safe?</p>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+            <button onclick="checkSafety(true)" class="btn-primary"
+                style="background: #4ade80; border: none; font-size: 1.5rem; padding: 2rem;">
+                <i class="fas fa-check-circle"></i> SAFE
+            </button>
+            <button onclick="checkSafety(false)" class="btn-primary"
+                style="background: #f87171; border: none; font-size: 1.5rem; padding: 2rem;">
+                <i class="fas fa-times-circle"></i> UNSAFE
+            </button>
+        </div>
+    </div>
+
+    <div id="feedback" class="mt-4" style="min-height: 50px; font-size: 1.5rem; font-weight: bold;"></div>
+
+    <div id="score-display" class="mt-2 text-muted">Question 1 of 5</div>
+</div>
+
+<script>
+    const scenarios = [
+        { icon: "🔥", desc: "A towel is sitting right next to a burning stove.", safe: false, explanation: "Never leave flammable things near fire!" },
+        { icon: "🧤", desc: "Wearing oven mitts to take a hot tray out.", safe: true, explanation: "Always protect your hands from heat!" },
+        { icon: "🔌", desc: "Pulling a plug out by the cord instead of the head.", safe: false, explanation: "Always hold the plug head to prevent sparks!" },
+        { icon: "🧼", desc: "Washing your hands before touching food.", safe: true, explanation: "Clean hands keep germs away!" },
+        { icon: "🔪", desc: "Walking with a knife pointed forward.", safe: false, explanation: "Always carry sharp things pointed down." }
+    ];
+
+    let currentIdx = 0;
+    let score = 0;
+
+    function checkSafety(userChoice) {
+        const scenario = scenarios[currentIdx];
+        const feedback = document.getElementById('feedback');
+
+        if (userChoice === scenario.safe) {
+            feedback.innerHTML = `<span style="color: #4ade80">Correct! ✨</span><br><small style="font-weight: normal; font-size: 1rem;">${scenario.explanation}</small>`;
+            score += 2; // 2 points per correct answer
+        } else {
+            feedback.innerHTML = `<span style="color: #f87171">Not safe! ❌</span><br><small style="font-weight: normal; font-size: 1rem;">${scenario.explanation}</small>`;
+        }
+
+        setTimeout(() => {
+            currentIdx++;
+            if (currentIdx < scenarios.length) {
+                loadScenario();
+            } else {
+                finishGame();
+            }
+        }, 3000);
+    }
+
+    function loadScenario() {
+        const s = scenarios[currentIdx];
+        document.getElementById('scenario-icon').innerText = s.icon;
+        document.getElementById('scenario-desc').innerText = s.desc;
+        document.getElementById('feedback').innerText = "";
+        document.getElementById('score-display').innerText = `Question ${currentIdx + 1} of ${scenarios.length}`;
+    }
+
+    async function finishGame() {
+        document.getElementById('game-area').innerHTML = `
+            <div class="glass-card" style="padding: 3rem;">
+                <h2 style="font-size: 3rem;">All Done!</h2>
+                <p style="font-size: 1.5rem; margin: 1rem 0;">You scored ${score} points for safety!</p>
+                <button class="btn-primary" onclick="window.location.href='/dashboard'">Back to Dashboard</button>
+            </div>
+        `;
+        document.getElementById('feedback').innerText = "";
+
+        // Log to DB
+        await fetch('/api/log_activity', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                type: 'Life Safety',
+                score: score,
+                details: `Completed Kitchen Safety quiz with ${score}/10`
+            })
+        });
+    }
+</script>
+{% endblock %}

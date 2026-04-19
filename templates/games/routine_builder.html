@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="text-center mb-2">
+    <h1>Daily Routine Builder</h1>
+    <p>Click the steps in the correct order to build the routine: <strong>"Morning Routine"</strong></p>
+</div>
+
+<div class="grid-2" style="max-width: 900px; margin: 0 auto;">
+    <!-- Available Steps -->
+    <div class="glass-panel">
+        <h3>Available Steps</h3>
+        <div id="source-list" style="display: flex; flex-direction: column; gap: 1rem; margin-top: 1rem;">
+            <!-- JS inserts items here -->
+        </div>
+    </div>
+
+    <!-- Your Routine -->
+    <div class="glass-panel">
+        <h3>Your Routine</h3>
+        <div id="target-list"
+            style="min-height: 200px; display: flex; flex-direction: column; gap: 1rem; margin-top: 1rem; border: 2px dashed rgba(255,255,255,0.2); padding: 1rem; border-radius: 12px;">
+            <p id="placeholder-text" style="color: rgba(255,255,255,0.5); text-align: center;">Click items on the left
+                to move them here.</p>
+        </div>
+
+        <div id="message-area" style="margin-top: 1rem; text-align: center; font-weight: bold;"></div>
+        <button id="check-btn" class="btn-primary" style="width: 100%; margin-top: 1rem; display: none;">I'm
+            Done!</button>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/games_routine.js') }}"></script>
+{% endblock %}

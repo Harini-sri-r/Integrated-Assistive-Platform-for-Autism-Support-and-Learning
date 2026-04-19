@@ -1,0 +1,184 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="text-center mb-2">
+    <h1>The Magic Storybook</h1>
+    <p class="text-muted">Choose the words to build your own amazing adventure!</p>
+</div>
+
+<div class="glass-panel" style="max-width: 900px; margin: 0 auto; padding: 2rem;">
+    <!-- Story Visual -->
+    <div id="story-visual" class="glass-card mb-4"
+        style="height: 300px; display: flex; align-items: center; justify-content: center; background: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('https://images.unsplash.com/photo-1516979187457-637abb4f9353?q=80&w=1000&auto=format&fit=crop'); background-size: cover; background-position: center; border-radius: 20px;">
+        <div id="visual-content" style="font-size: 8rem; filter: drop-shadow(0 0 20px rgba(255,255,255,0.5));">📖</div>
+    </div>
+
+    <!-- Story Text -->
+    <div class="glass-card mb-4"
+        style="padding: 2rem; font-size: 1.5rem; line-height: 1.8; text-align: center; border: 2px solid var(--accent);">
+        <div id="story-display">
+            Once upon a time, there was a <span class="story-slot" id="slot-1">.......</span>
+            who lived in a <span class="story-slot" id="slot-2">.......</span>.
+            Every day, they loved to <span class="story-slot" id="slot-3">.......</span>.
+            One day, they found a <span class="story-slot" id="slot-4">.......</span>
+            with their best friend, a <span class="story-slot" id="slot-5">.......</span>!
+        </div>
+    </div>
+
+    <!-- Options Selection -->
+    <div id="options-panel" class="text-center">
+        <h3 id="panel-title" class="mb-3">Pick a Character:</h3>
+        <div id="options-grid" style="display: flex; justify-content: center; gap: 1rem; flex-wrap: wrap;">
+            <!-- Options here -->
+        </div>
+    </div>
+
+    <!-- Story Result (Hidden initially) -->
+    <div id="story-complete" style="display: none; text-align: center;">
+        <h2 class="text-accent mb-3">You Wrote a Masterpiece! 🖌️</h2>
+        <button class="btn-primary" onclick="window.location.href='/learning'">Back to Learning Hub</button>
+        <button class="btn-secondary ml-2" onclick="location.reload()">Write Another</button>
+    </div>
+</div>
+
+<style>
+    .story-slot {
+        background: rgba(99, 102, 241, 0.2);
+        padding: 0.2rem 1rem;
+        border-radius: 8px;
+        font-weight: bold;
+        color: var(--accent);
+        border-bottom: 2px solid var(--accent);
+    }
+
+    .option-card {
+        padding: 1.5rem;
+        cursor: pointer;
+        transition: all 0.3s;
+        min-width: 140px;
+    }
+
+    .option-card:hover {
+        transform: translateY(-5px);
+        background: rgba(99, 102, 241, 0.3) !important;
+        border-color: var(--accent);
+    }
+
+    .option-card.selected {
+        background: var(--accent) !important;
+        color: white;
+    }
+</style>
+
+<script>
+    const storyData = [
+        {
+            title: "Pick a Character:",
+            slotId: "slot-1",
+            options: [
+                { text: "Friendly Dragon", icon: "🐉" },
+                { text: "Smart Robot", icon: "🤖" },
+                { text: "Brave Knight", icon: "🛡️" },
+                { text: "Magical Unicorn", icon: "🦄" }
+            ]
+        },
+        {
+            title: "Where do they live?",
+            slotId: "slot-2",
+            options: [
+                { text: "Floating Castle", icon: "🏰" },
+                { text: "Giant Mushroom", icon: "🍄" },
+                { text: "Underwater Cave", icon: "🐚" },
+                { text: "Space Station", icon: "🚀" }
+            ]
+        },
+        {
+            title: "What do they love to do?",
+            slotId: "slot-3",
+            options: [
+                { text: "Bake Cookies", icon: "🍪" },
+                { text: "Dance in the Rain", icon: "💃" },
+                { text: "Paint Rainbows", icon: "🎨" },
+                { text: "Collect Stars", icon: "⭐" }
+            ]
+        },
+        {
+            title: "What did they find?",
+            slotId: "slot-4",
+            options: [
+                { text: "Glowing Key", icon: "🔑" },
+                { text: "Talking Map", icon: "🗺️" },
+                { text: "Magic Wand", icon: "🪄" },
+                { text: "Golden Egg", icon: "🥚" }
+            ]
+        },
+        {
+            title: "Who was their best friend?",
+            slotId: "slot-5",
+            options: [
+                { text: "Happy Bee", icon: "🐝" },
+                { text: "Wise Owl", icon: "🦉" },
+                { text: "Tiny Mouse", icon: "🐭" },
+                { text: "Brave Dog", icon: "🐶" }
+            ]
+        }
+    ];
+
+    let currentStep = 0;
+    let earnedXP = 0;
+
+    function renderStep() {
+        const step = storyData[currentStep];
+        document.getElementById('panel-title').innerText = step.title;
+        const grid = document.getElementById('options-grid');
+        grid.innerHTML = '';
+
+        step.options.forEach(opt => {
+            const div = document.createElement('div');
+            div.className = 'glass-card option-card';
+            div.innerHTML = `
+                <div style="font-size: 3rem; margin-bottom: 0.5rem;">${opt.icon}</div>
+                <div style="font-weight: bold;">${opt.text}</div>
+            `;
+            div.onclick = () => selectOption(opt);
+            grid.appendChild(div);
+        });
+    }
+
+    async function selectOption(opt) {
+        const step = storyData[currentStep];
+        const slot = document.getElementById(step.slotId);
+        slot.innerText = opt.text;
+        slot.style.background = "rgba(74, 222, 128, 0.2)";
+        slot.style.color = "#4ade80";
+        slot.style.borderColor = "#4ade80";
+
+        document.getElementById('visual-content').innerText = opt.icon;
+        earnedXP += 25;
+
+        currentStep++;
+        if (currentStep < storyData.length) {
+            renderStep();
+        } else {
+            finishStory();
+        }
+    }
+
+    async function finishStory() {
+        document.getElementById('options-panel').style.display = 'none';
+        document.getElementById('story-complete').style.display = 'block';
+
+        await fetch('/api/log_activity', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                type: 'Interactive Storytelling',
+                score: earnedXP,
+                details: 'Authored a complete story in the Magic Storybook.'
+            })
+        });
+    }
+
+    renderStep();
+</script>
+{% endblock %}

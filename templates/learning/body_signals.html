@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="text-center mb-2">
+    <h1>Body Signals</h1>
+    <p class="text-muted">What is your body trying to tell you? Look at the signs!</p>
+</div>
+
+<div class="glass-panel" style="max-width: 600px; margin: 0 auto; padding: 2rem; text-align: center;">
+    <div id="game-container">
+        <div id="signal-display" class="glass-card mb-4" style="padding: 3rem;">
+            <div id="signal-icon" style="font-size: 6rem; margin-bottom: 1.5rem;">🥱</div>
+            <h2 id="signal-desc" style="font-size: 1.8rem;">I am yawning and my eyes feel heavy.</h2>
+        </div>
+
+        <div id="options" style="display: grid; grid-template-columns: 1fr; gap: 1rem;">
+            <button onclick="checkSignal(0)" class="btn-secondary" style="font-size: 1.3rem; padding: 1.5rem;">I am
+                hungry 🍎</button>
+            <button onclick="checkSignal(1)" class="btn-secondary" style="font-size: 1.3rem; padding: 1.5rem;">I am
+                tired 😴</button>
+            <button onclick="checkSignal(2)" class="btn-secondary" style="font-size: 1.3rem; padding: 1.5rem;">I am
+                thirsty 💧</button>
+        </div>
+    </div>
+
+    <div id="feedback" class="mt-4" style="min-height: 50px; font-size: 1.5rem; font-weight: bold;"></div>
+</div>
+
+<script>
+    const signals = [
+        { icon: "🥱", desc: "I am yawning and my eyes feel heavy.", correct: 1, text: "I am tired" },
+        { icon: "🥤", desc: "My throat feels dry and scratchy.", correct: 2, text: "I am thirsty" },
+        { icon: "🥨", desc: "My stomach is making a growling sound.", correct: 0, text: "I am hungry" },
+        { icon: "🚽", desc: "I have a tight feeling in my tummy.", correct: 3, text: "I need the bathroom", special: true },
+        { icon: "🥶", desc: "I am shivering and my skin feels bumpy.", correct: 4, text: "I am cold" }
+    ];
+
+    let currentIdx = 0;
+    let score = 0;
+
+    function loadSignal() {
+        const s = signals[currentIdx];
+        document.getElementById('signal-icon').innerText = s.icon;
+        document.getElementById('signal-desc').innerText = s.desc;
+
+        // Dynamic options for the bathroom one
+        const opts = document.getElementById('options');
+        if (s.special) {
+            opts.innerHTML = `
+                <button onclick="checkSignal(3)" class="btn-secondary" style="font-size: 1.3rem; padding: 1.5rem;">I need the bathroom 🚽</button>
+                <button onclick="checkSignal(4)" class="btn-secondary" style="font-size: 1.3rem; padding: 1.5rem;">I am cold 🥶</button>
+                <button onclick="checkSignal(0)" class="btn-secondary" style="font-size: 1.3rem; padding: 1.5rem;">I am hungry 🍎</button>
+           `;
+        } else if (currentIdx === 4) {
+            opts.innerHTML = `
+                <button onclick="checkSignal(4)" class="btn-secondary" style="font-size: 1.3rem; padding: 1.5rem;">I am cold 🥶</button>
+                <button onclick="checkSignal(2)" class="btn-secondary" style="font-size: 1.3rem; padding: 1.5rem;">I am thirsty 💧</button>
+                <button onclick="checkSignal(1)" class="btn-secondary" style="font-size: 1.3rem; padding: 1.5rem;">I am tired 😴</button>
+           `;
+        }
+
+        document.getElementById('feedback').innerText = "";
+    }
+
+    async function checkSignal(choice) {
+        const s = signals[currentIdx];
+        const feedback = document.getElementById('feedback');
+
+        if (choice === s.correct) {
+            feedback.innerHTML = `<span style="color: #4ade80">Correct! Your body says: ${s.text}! ✨</span>`;
+            score += 20;
+        } else {
+            feedback.innerHTML = `<span style="color: #f87171">Not quite! That sign means: ${s.text}. ❌</span>`;
+        }
+
+        setTimeout(() => {
+            currentIdx++;
+            if (currentIdx < signals.length) {
+                loadSignal();
+            } else {
+                finishGame();
+            }
+        }, 2000);
+    }
+
+    async function finishGame() {
+        document.getElementById('game-container').innerHTML = `
+            <div class="glass-card" style="padding: 3rem;">
+                <h2 style="font-size: 3rem;">Body Expert!</h2>
+                <p style="font-size: 1.5rem; margin: 1rem 0;">You are great at listening to your body!</p>
+                <button class="btn-primary" onclick="window.location.href='/learning/hub'">Well Done!</button>
+            </div>
+        `;
+
+        await fetch('/api/log_activity', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                type: 'Life Safety',
+                score: score,
+                details: 'Practiced identifying internal body signals/needs.'
+            })
+        });
+    }
+
+    loadSignal();
+</script>
+{% endblock %}

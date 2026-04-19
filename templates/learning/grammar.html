@@ -1,0 +1,316 @@
+{% extends "base.html" %}
+
+{% block head %}
+<style>
+    .learning-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 2rem;
+    }
+
+    /* Header */
+    .hub-header {
+        margin-bottom: 3rem;
+        background: white;
+        padding: 2rem;
+        border-radius: 12px;
+        border: 1px solid var(--border);
+    }
+
+    .hub-title {
+        font-size: 2rem;
+        font-weight: 800;
+        color: #000;
+        margin: 0 0 0.5rem 0;
+    }
+
+    .hub-subtitle {
+        color: #000;
+        opacity: 0.7;
+        font-size: 0.95rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="hub-header">
+    <h1 class="hub-title">Grammar Games</h1>
+    <p class="hub-subtitle">Fun puzzles to master sentences!</p>
+</div>
+
+<div class="glass-panel" style="max-width: 800px; margin: 0 auto; padding: 2rem;">
+    <!-- Game Selection Menu -->
+    <div id="game-selection" style="text-align: center;">
+        <h2 class="mb-2">Choose a Game</h2>
+        <div class="grid-2"
+            style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem;">
+            <div class="glass-card" onclick="startSentenceBuilder()" style="cursor: pointer; padding: 2rem;">
+                <div style="font-size: 3rem; margin-bottom: 0.5rem;">🏗️</div>
+                <h3>Sentence Builder</h3>
+                <p>Arrange words to make a correct sentence.</p>
+            </div>
+            <div class="glass-card" onclick="startNounVerbSorter()" style="cursor: pointer; padding: 2rem;">
+                <div style="font-size: 3rem; margin-bottom: 0.5rem;">🧺</div>
+                <h3>Noun or Verb?</h3>
+                <p>Sort words into the correct bucket.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sentence Builder Game Area -->
+    <div id="sentence-game" style="display: none;">
+        <div style="margin-bottom: 2rem;">
+            <button class="btn-secondary" onclick="showMenu()"><i class="fas fa-arrow-left"></i> Back</button>
+        </div>
+        <div class="text-center">
+            <h2 class="mb-2">Build the Sentence</h2>
+            <div id="drop-zone"
+                style="min-height: 80px; border: 2px dashed #94a3b8; border-radius: 12px; padding: 1rem; display: flex; gap: 0.5rem; justify-content: center; align-items: center; margin-bottom: 2rem; background: #f8fafc;">
+                <span style="color: #64748b;" id="sentence-placeholder-text">Click words in order...</span>
+            </div>
+
+            <div id="word-bank" style="display: flex; gap: 0.5rem; justify-content: center; flex-wrap: wrap;">
+                <!-- Words injected here -->
+            </div>
+
+            <div id="sentence-feedback" style="margin-top: 2rem; height: 30px; font-size: 1.2rem; font-weight: bold;">
+            </div>
+
+            <button id="check-btn" class="btn-primary mt-2" onclick="checkSentence()">Check Answer</button>
+            <button id="next-btn" class="btn-primary mt-2" onclick="nextSentence()" style="display: none;">Next <i
+                    class="fas fa-arrow-right"></i></button>
+        </div>
+    </div>
+
+    <!-- Noun or Verb Sorter Game Area -->
+    <div id="sorter-game" style="display: none;">
+        <div style="margin-bottom: 2rem;">
+            <button class="btn-secondary" onclick="showMenu()"><i class="fas fa-arrow-left"></i> Back</button>
+        </div>
+        <div class="text-center">
+            <h2 class="mb-2">Is it a Noun or a Verb?</h2>
+            <div id="word-to-sort"
+                style="font-size: 2.5rem; font-weight: bold; margin: 2rem 0; color: var(--accent-1);">Word</div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+                <div id="noun-bucket" class="glass-card"
+                    style="border: 2px solid #6366f1; padding: 2rem; cursor: pointer;" onclick="handleSort('noun')">
+                    <div style="font-size: 2.5rem;">🧺</div>
+                    <h3>Noun</h3>
+                    <p style="font-size: 0.9rem; opacity: 0.8;">(Person, Place, Thing)</p>
+                </div>
+                <div id="verb-bucket" class="glass-card"
+                    style="border: 2px solid #10b981; padding: 2rem; cursor: pointer;" onclick="handleSort('verb')">
+                    <div style="font-size: 2.5rem;">🏃</div>
+                    <h3>Verb</h3>
+                    <p style="font-size: 0.9rem; opacity: 0.8;">(Action Word)</p>
+                </div>
+            </div>
+
+            <div id="sorter-feedback" style="margin-top: 2rem; height: 30px; font-size: 1.2rem; font-weight: bold;">
+            </div>
+            <p id="sorter-progress" style="margin-top: 1rem; opacity: 0.7;"></p>
+        </div>
+    </div>
+</div>
+
+<script>
+    // --- Global State ---
+    let sentenceLevel = 0;
+    const sentenceLevels = [
+        { words: ["The", "cat", "sleeps"], target: "The cat sleeps" },
+        { words: ["I", "like", "apples"], target: "I like apples" },
+        { words: ["She", "reads", "a", "book"], target: "She reads a book" },
+        { words: ["The", "sun", "is", "hot"], target: "The sun is hot" },
+        { words: ["We", "play", "in", "the", "park"], target: "We play in the park" }
+    ];
+
+    let sorterIndex = 0;
+    let sorterScore = 0;
+    const sorterWords = [
+        { word: "Apple", type: "noun" },
+        { word: "Run", type: "verb" },
+        { word: "Teacher", type: "noun" },
+        { word: "Dance", type: "verb" },
+        { word: "Computer", type: "noun" },
+        { word: "Jump", type: "verb" },
+        { word: "Dog", type: "noun" },
+        { word: "Read", type: "verb" }
+    ];
+
+    const wordEmojis = {
+        "The": "🖼️", "cat": "🐱", "sleeps": "💤", "I": "👤", "like": "❤️", "apples": "🍎",
+        "She": "👧", "reads": "📖", "a": "✨", "book": "📚", "sun": "☀️", "is": "🌡️", "hot": "🔥",
+        "We": "👫", "play": "⚽", "in": "📍", "the": "🌐", "park": "🌳",
+        "Apple": "🍎", "Run": "🏃", "Teacher": "👩‍🏫", "Dance": "💃", "Computer": "💻", "Jump": "🦘", "Dog": "🐶", "Read": "📖"
+    };
+
+    let builtSentence = [];
+
+    // --- Navigation ---
+    function showMenu() {
+        document.getElementById('game-selection').style.display = 'block';
+        document.getElementById('sentence-game').style.display = 'none';
+        document.getElementById('sorter-game').style.display = 'none';
+    }
+
+    // --- Sentence Builder Logic ---
+    function startSentenceBuilder() {
+        document.getElementById('game-selection').style.display = 'none';
+        document.getElementById('sentence-game').style.display = 'block';
+        sentenceLevel = 0;
+        builtSentence = [];
+        loadSentenceLevel();
+    }
+
+    function loadSentenceLevel() {
+        const level = sentenceLevels[sentenceLevel];
+        const bank = document.getElementById('word-bank');
+        const dropZone = document.getElementById('drop-zone');
+
+        bank.innerHTML = '';
+        dropZone.innerHTML = '<span class="text-muted" id="sentence-placeholder-text">Click words in order...</span>';
+        document.getElementById('sentence-feedback').innerText = '';
+        document.getElementById('check-btn').style.display = 'inline-block';
+        document.getElementById('next-btn').style.display = 'none';
+
+        const shuffled = [...level.words].sort(() => Math.random() - 0.5);
+
+        shuffled.forEach(word => {
+            const btn = document.createElement('button');
+            btn.className = 'btn-secondary';
+            btn.innerHTML = `${wordEmojis[word] || ''} ${word}`;
+            btn.style.margin = '0.2rem';
+            btn.onclick = () => addToSentence(word, btn);
+            bank.appendChild(btn);
+        });
+    }
+
+    function addToSentence(word, originalBtn) {
+        const dropZone = document.getElementById('drop-zone');
+        const placeholder = document.getElementById('sentence-placeholder-text');
+        if (placeholder) placeholder.remove();
+
+        builtSentence.push(word);
+
+        const wordBadge = document.createElement('span');
+        wordBadge.innerText = word;
+        wordBadge.style.background = 'rgba(99, 102, 241, 0.2)';
+        wordBadge.style.border = '1px solid #6366f1';
+        wordBadge.style.padding = '0.5rem 1rem';
+        wordBadge.style.borderRadius = '8px';
+        wordBadge.style.cursor = 'pointer';
+        wordBadge.onclick = () => {
+            builtSentence = [];
+            loadSentenceLevel();
+        };
+
+        dropZone.appendChild(wordBadge);
+        originalBtn.style.display = 'none';
+    }
+
+
+    function checkSentence() {
+        const attempt = builtSentence.join(" ");
+        const target = sentenceLevels[sentenceLevel].target;
+        const feedback = document.getElementById('sentence-feedback');
+
+        if (attempt === target) {
+            feedback.innerHTML = '<span style="color:#4ade80">Correct! Great job! 🎉</span>';
+            document.getElementById('check-btn').style.display = 'none';
+            document.getElementById('next-btn').style.display = 'inline-block';
+
+            logActivity('Sentence Builder', 10, `Completed: ${target}`);
+        } else {
+            feedback.innerHTML = '<span style="color:#f87171">Not quite right. Try again!</span>';
+            setTimeout(() => {
+                builtSentence = [];
+                loadSentenceLevel();
+            }, 1500);
+        }
+    }
+
+    function nextSentence() {
+        sentenceLevel++;
+        if (sentenceLevel < sentenceLevels.length) {
+            builtSentence = [];
+            loadSentenceLevel();
+        } else {
+            finishSentenceGame();
+        }
+    }
+
+    function finishSentenceGame() {
+        document.getElementById('sentence-game').innerHTML = `
+            <div class="glass-card text-center" style="padding: 3rem;">
+                <h2 style="font-size: 2.5rem;">Sentence Master! 🏆</h2>
+                <p style="font-size: 1.2rem; margin: 1rem 0;">You've built every sentence correctly.</p>
+                <div style="font-size: 4rem; margin-bottom: 1rem;">🏗️✨</div>
+                <button class="btn-primary" onclick="showMenu()">Back to Menu</button>
+            </div>
+        `;
+    }
+
+    // --- Noun/Verb Sorter Logic ---
+    function startNounVerbSorter() {
+        document.getElementById('game-selection').style.display = 'none';
+        document.getElementById('sorter-game').style.display = 'block';
+        document.getElementById('noun-bucket').style.display = 'block';
+        document.getElementById('verb-bucket').style.display = 'block';
+        sorterIndex = 0;
+        sorterScore = 0;
+        loadSorterWord();
+    }
+
+    function loadSorterWord() {
+        const item = sorterWords[sorterIndex];
+        const emoji = wordEmojis[item.word] || '❓';
+        document.getElementById('word-to-sort').innerHTML = `${emoji}<br>${item.word}`;
+        document.getElementById('sorter-feedback').textContent = '';
+        document.getElementById('sorter-progress').textContent = `Word ${sorterIndex + 1} of 5`;
+    }
+
+    function handleSort(choice) {
+        const correctType = sorterWords[sorterIndex].type;
+        const feedback = document.getElementById('sorter-feedback');
+
+        if (choice === correctType) {
+            feedback.innerHTML = '<span style="color:#4ade80">Correct! ✨</span>';
+            sorterScore++;
+        } else {
+            feedback.innerHTML = '<span style="color:#f87171">Incorrect ❌</span>';
+        }
+
+        setTimeout(() => {
+            sorterIndex++;
+            if (sorterIndex < 5) { // Cap at 5
+                loadSorterWord();
+            } else {
+                finishSorter();
+            }
+        }, 1000);
+    }
+
+    async function finishSorter() {
+        document.getElementById('word-to-sort').textContent = "Game Complete!";
+        document.getElementById('sorter-feedback').innerHTML = `<span style="color:var(--accent-1)">Final Score: ${sorterScore}/${sorterWords.length}</span>`;
+        document.getElementById('noun-bucket').style.display = 'none';
+        document.getElementById('verb-bucket').style.display = 'none';
+
+        logActivity('Noun or Verb Sorter', sorterScore, `Sorted ${sorterScore}/${sorterWords.length} correctly`);
+    }
+
+    // --- Utility ---
+    async function logActivity(type, score, details) {
+        try {
+            await fetch('/api/log_activity', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ type, score, details })
+            });
+        } catch (e) {
+            console.error("Failed to log activity", e);
+        }
+    }
+</script>
+{% endblock %}

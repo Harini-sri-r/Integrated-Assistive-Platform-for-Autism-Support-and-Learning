@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="text-center mb-2">
+    <h1>Sorting Master</h1>
+    <p>Drag items to the correct box! 🗑️</p>
+    <p style="color: var(--text-muted);">Level 1: Healthy vs Unhealthy Food</p>
+</div>
+
+<div class="glass-panel" style="max-width: 900px; margin: 0 auto;">
+
+    <!-- Draggable Items -->
+    <div id="items-container"
+        style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; margin-bottom: 2rem; min-height: 100px;">
+        <!-- Items Injected Here -->
+    </div>
+
+    <!-- Drop Zones -->
+    <div class="grid-2" style="gap: 2rem;">
+        <div class="drop-zone glass-card" data-category="healthy"
+            style="border: 2px dashed #4ade80; min-height: 200px; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+            <i class="fas fa-apple-alt" style="font-size: 3rem; color: #4ade80; margin-bottom: 1rem;"></i>
+            <h3>Healthy</h3>
+        </div>
+
+        <div class="drop-zone glass-card" data-category="unhealthy"
+            style="border: 2px dashed #f87171; min-height: 200px; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+            <i class="fas fa-cookie-bite" style="font-size: 3rem; color: #f87171; margin-bottom: 1rem;"></i>
+            <h3>Unhealthy</h3>
+        </div>
+    </div>
+
+    <div id="success-msg" style="text-align: center; margin-top: 2rem; font-size: 2rem; color: #4ade80; display: none;">
+        🎉 Awesome Job!
+        <button onclick="location.reload()" class="btn-primary mt-2" style="font-size: 1rem;">Play Again</button>
+    </div>
+
+</div>
+
+<style>
+    .draggable-item {
+        font-size: 4rem;
+        cursor: grab;
+        transition: transform 0.2s;
+        user-select: none;
+    }
+
+    .draggable-item:active {
+        cursor: grabbing;
+        transform: scale(1.2);
+    }
+
+    .drop-zone.drag-over {
+        background: rgba(255, 255, 255, 0.1);
+        transform: scale(1.02);
+    }
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/games_sorting.js') }}"></script>
+{% endblock %}

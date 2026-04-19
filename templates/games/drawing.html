@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="text-center mb-2">
+    <h1>Creative Studio</h1>
+    <p>Draw, trace, and be creative! 🎨</p>
+</div>
+
+<div class="glass-panel"
+    style="max-width: 900px; margin: 0 auto; display: flex; flex-direction: column; align-items: center;">
+
+    <div class="toolbar glass-card" style="margin-bottom: 1rem; display: flex; gap: 1rem; padding: 0.5rem 1rem;">
+        <button id="color-red" class="color-btn" style="background: #ef4444;"></button>
+        <button id="color-blue" class="color-btn" style="background: #3b82f6;"></button>
+        <button id="color-green" class="color-btn" style="background: #22c55e;"></button>
+        <button id="color-yellow" class="color-btn" style="background: #eab308;"></button>
+        <button id="color-black" class="color-btn" style="background: #000;"></button>
+        <div style="width: 1px; background: rgba(255,255,255,0.2); height: 30px;"></div>
+        <button id="btn-eraser" class="tool-btn"><i class="fas fa-eraser"></i></button>
+        <button id="btn-clear" class="tool-btn"><i class="fas fa-trash"></i></button>
+        <button id="btn-save" class="tool-btn"><i class="fas fa-save"></i></button>
+    </div>
+
+    <div style="position: relative;">
+        <!-- Canvas -->
+        <canvas id="drawing-canvas" width="800" height="500"
+            style="background: white; border-radius: 12px; cursor: crosshair; touch-action: none;"></canvas>
+
+        <!-- Optional overlay for tracing (hidden by default) -->
+        <div id="overlay-letter"
+            style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 300px; color: rgba(0,0,0,0.1); pointer-events: none; display: none; font-family: sans-serif;">
+            A</div>
+    </div>
+
+    <div class="mt-2 text-center">
+        <h3>Tracing Challenges</h3>
+        <div style="display: flex; gap: 0.5rem; justify-content: center; margin-top: 0.5rem;">
+            <button class="btn-secondary trace-btn" data-char="A">A</button>
+            <button class="btn-secondary trace-btn" data-char="B">B</button>
+            <button class="btn-secondary trace-btn" data-char="C">C</button>
+            <button class="btn-secondary trace-btn" data-char="1">1</button>
+            <button class="btn-secondary trace-btn" data-char="2">2</button>
+            <button class="btn-secondary trace-btn" data-char="3">3</button>
+            <button class="btn-secondary" id="btn-free">Free Draw</button>
+        </div>
+    </div>
+
+</div>
+
+<style>
+    .color-btn {
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        border: 2px solid var(--text-muted);
+        cursor: pointer;
+        transition: transform 0.2s;
+    }
+
+    .color-btn:hover {
+        transform: scale(1.2);
+    }
+
+    .color-btn.active {
+        box-shadow: 0 0 10px var(--primary);
+        border-color: var(--primary);
+        transform: scale(1.1);
+    }
+
+    .tool-btn {
+        background: transparent;
+        border: none;
+        color: var(--text);
+
+        font-size: 1.2rem;
+        cursor: pointer;
+        transition: color 0.2s;
+    }
+
+    .tool-btn:hover {
+        color: var(--primary);
+    }
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/games_drawing.js') }}"></script>
+{% endblock %}

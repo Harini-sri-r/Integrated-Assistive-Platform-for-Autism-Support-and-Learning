@@ -1,0 +1,180 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="text-center mb-2">
+    <h1>Memory Match</h1>
+    <p class="text-muted">Find all the matching pairs!</p>
+</div>
+
+<div class="glass-panel" style="max-width: 700px; margin: 0 auto; padding: 2rem;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+        <div>
+            <h3 id="moves-count">Moves: 0</h3>
+        </div>
+        <div>
+            <h3 id="matches-count">Matches: 0 / 8</h3>
+        </div>
+        <button class="btn-primary" onclick="resetGame()">Reset Game</button>
+    </div>
+
+    <div id="memory-grid" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem;">
+        <!-- Cards will be injected here -->
+    </div>
+
+    <div id="win-message"
+        style="display: none; text-align: center; margin-top: 2rem; background: rgba(74, 222, 128, 0.2); padding: 2rem; border-radius: 12px; border: 1px solid #4ade80;">
+        <h2>Amazing Job! 🎉</h2>
+        <p id="final-stats"></p>
+        <button class="btn-primary mt-2" onclick="window.location.href='/games'">Back to Games Hub</button>
+        <button class="btn-secondary ml-2" onclick="window.location.href='/dashboard'">Back to Dashboard</button>
+    </div>
+</div>
+
+<style>
+    .memory-card {
+        aspect-ratio: 1;
+        min-height: 100px;
+        background: #f1f5f9; /* Solid light background fallback */
+        color: #1e293b;
+        border: 2px solid #cbd5e1;
+        border-radius: 12px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-size: 2.5rem;
+        cursor: pointer;
+        transition: transform 0.4s, background 0.3s;
+        transform-style: preserve-3d;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    }
+
+    .memory-card.flipped {
+        transform: rotateY(180deg);
+        background: #e0e7ff;
+        border-color: #6366f1;
+    }
+
+    .memory-card.matched {
+        background: #dcfce7;
+        border-color: #4ade80;
+        cursor: default;
+    }
+
+    .memory-card .card-content {
+        visibility: hidden;
+        backface-visibility: hidden;
+    }
+
+    .memory-card.flipped .card-content,
+    .memory-card.matched .card-content {
+        visibility: visible;
+        transform: rotateY(180deg);
+    }
+</style>
+
+<script>
+    const emojis = ['🍎', '🐶', '🍕', '🚀', '⚽', '🍦', '🐧', '🚁'];
+    let cards = [...emojis, ...emojis];
+    let flippedCards = [];
+    let matchedCount = 0;
+    let moves = 0;
+    let lockBoard = false;
+
+    function shuffle(array) {
+        for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
+        }
+        return array;
+    }
+
+    function createCard(content, index) {
+        const card = document.createElement('div');
+        card.classList.add('memory-card');
+        card.dataset.value = content;
+        card.dataset.index = index;
+        card.innerHTML = `<div class="card-content">${content}</div>`;
+        card.addEventListener('click', flipCard);
+        return card;
+    }
+
+    function flipCard() {
+        if (lockBoard) return;
+        if (this === flippedCards[0]) return;
+        if (this.classList.contains('matched')) return;
+
+        this.classList.add('flipped');
+        flippedCards.push(this);
+
+        if (flippedCards.length === 2) {
+            moves++;
+            document.getElementById('moves-count').textContent = `Moves: ${moves}`;
+            checkMatch();
+        }
+    }
+
+    function checkMatch() {
+        lockBoard = true;
+        const [card1, card2] = flippedCards;
+
+        if (card1.dataset.value === card2.dataset.value) {
+            card1.classList.add('matched');
+            card2.classList.add('matched');
+            matchedCount++;
+            document.getElementById('matches-count').textContent = `Matches: ${matchedCount} / 8`;
+            resetTurn();
+            if (matchedCount === 8) endGame();
+        } else {
+            setTimeout(() => {
+                card1.classList.remove('flipped');
+                card2.classList.remove('flipped');
+                resetTurn();
+            }, 1000);
+        }
+    }
+
+    function resetTurn() {
+        flippedCards = [];
+        lockBoard = false;
+    }
+
+    function resetGame() {
+        moves = 0;
+        matchedCount = 0;
+        document.getElementById('moves-count').textContent = `Moves: 0`;
+        document.getElementById('matches-count').textContent = `Matches: 0 / 8`;
+        document.getElementById('win-message').style.display = 'none';
+        document.getElementById('memory-grid').style.display = 'grid';
+
+        cards = shuffle([...emojis, ...emojis]);
+        const grid = document.getElementById('memory-grid');
+        grid.innerHTML = '';
+        cards.forEach((emoji, i) => {
+            grid.appendChild(createCard(emoji, i));
+        });
+    }
+
+    async function endGame() {
+        document.getElementById('memory-grid').style.display = 'none';
+        document.getElementById('win-message').style.display = 'block';
+        document.getElementById('final-stats').textContent = `Finished in ${moves} moves!`;
+
+        // Log to DB
+        try {
+            await fetch('/api/log_activity', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    type: 'Memory Match',
+                    score: Math.max(0, 100 - (moves - 8) * 5),
+                    details: `Finished memory match in ${moves} moves.`
+                })
+            });
+        } catch (e) {
+            console.error("Failed to log activity", e);
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', resetGame);
+</script>
+{% endblock %}

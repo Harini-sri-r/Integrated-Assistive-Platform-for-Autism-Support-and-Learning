@@ -1,0 +1,173 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="text-center mb-2">
+    <h1>Color Matcher</h1>
+    <p class="text-muted">Match the color names to the bright blocks!</p>
+</div>
+
+<div class="glass-panel" style="max-width: 800px; margin: 0 auto; padding: 2rem;">
+    <div id="game-stats" class="d-flex justify-content-between mb-3" style="font-size: 1.2rem; font-weight: bold;">
+        <span>Score: <span id="score">0</span></span>
+        <span>Items Left: <span id="items-left">0</span></span>
+    </div>
+
+    <div id="drop-targets" class="grid-3 mb-4" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem;">
+        <!-- Drop targets injected here -->
+    </div>
+
+    <div id="color-dock" class="glass-panel mt-4"
+        style="min-height: 120px; display: flex; justify-content: center; align-items: center; gap: 1rem; flex-wrap: wrap;">
+        <!-- Color blocks injected here -->
+    </div>
+
+    <div id="feedback" class="text-center mt-3" style="min-height: 40px; font-size: 1.3rem; font-weight: bold;"></div>
+</div>
+
+<style>
+    .color-target {
+        padding: 2.5rem 1rem;
+        text-align: center;
+        border: 2px dashed rgba(255, 255, 255, 0.2);
+        border-radius: 12px;
+        transition: all 0.3s;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    .color-target.drag-over {
+        background: rgba(255, 255, 255, 0.1);
+        border-color: var(--accent);
+        transform: scale(1.05);
+    }
+
+    .target-filled {
+        border-style: solid;
+    }
+
+    .color-block {
+        width: 80px;
+        height: 80px;
+        border-radius: 15px;
+        cursor: grab;
+        transition: transform 0.2s;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    }
+
+    .color-block:active {
+        cursor: grabbing;
+    }
+</style>
+
+<script>
+    const colorSets = [
+        { name: "Red", hex: "#ef4444" },
+        { name: "Blue", hex: "#3b82f6" },
+        { name: "Green", hex: "#22c55e" },
+        { name: "Yellow", hex: "#eab308" },
+        { name: "Purple", hex: "#a855f7" },
+        { name: "Orange", hex: "#f97316" }
+    ];
+
+    let score = 0;
+    let itemsLeft = colorSets.length;
+
+    function initGame() {
+        const targets = document.getElementById('drop-targets');
+        const dock = document.getElementById('color-dock');
+        targets.innerHTML = '';
+        dock.innerHTML = '';
+        itemsLeft = colorSets.length;
+        document.getElementById('items-left').innerText = itemsLeft;
+
+        // Shuffle for variety
+        const shuffledTargets = [...colorSets].sort(() => Math.random() - 0.5);
+        shuffledTargets.forEach(c => {
+            const div = document.createElement('div');
+            div.className = 'color-target glass-card';
+            div.innerText = c.name;
+            div.dataset.color = c.name;
+            div.ondragover = allowDrop;
+            div.ondrop = (e) => drop(e, c.name);
+            targets.appendChild(div);
+        });
+
+        const shuffledBlocks = [...colorSets].sort(() => Math.random() - 0.5);
+        shuffledBlocks.forEach((c, index) => {
+            const block = document.createElement('div');
+            block.className = 'color-block';
+            block.style.background = c.hex;
+            block.draggable = true;
+            block.id = `color-${index}`;
+            block.dataset.name = c.name;
+            block.ondragstart = (e) => e.dataTransfer.setData("text", e.target.id);
+            dock.appendChild(block);
+        });
+    }
+
+    function allowDrop(e) {
+        e.preventDefault();
+        e.currentTarget.classList.add('drag-over');
+    }
+
+    // Handle drag leave
+    document.addEventListener('dragleave', (e) => {
+        if (e.target.classList.contains('color-target')) {
+            e.target.classList.remove('drag-over');
+        }
+    });
+
+    async function drop(e, targetColor) {
+        e.preventDefault();
+        const target = e.currentTarget;
+        target.classList.remove('drag-over');
+
+        const id = e.dataTransfer.getData("text");
+        const block = document.getElementById(id);
+        const blockColor = block.dataset.name;
+        const feedback = document.getElementById('feedback');
+
+        if (blockColor === targetColor) {
+            score += 10;
+            itemsLeft--;
+            target.style.background = block.style.background;
+            target.classList.add('target-filled');
+            target.style.color = 'white';
+            target.style.textShadow = '0 2px 4px rgba(0,0,0,0.5)';
+            block.remove();
+
+            feedback.innerHTML = '<span style="color:#4ade80">Perfect Match! ✨</span>';
+            document.getElementById('score').innerText = score;
+            document.getElementById('items-left').innerText = itemsLeft;
+
+            if (itemsLeft === 0) finishGame();
+        } else {
+            feedback.innerHTML = '<span style="color:#f87171">Not quite! Try another one. ❌</span>';
+            block.style.transform = "scale(1.1) rotate(5deg)";
+            setTimeout(() => block.style.transform = "scale(1) rotate(0)", 200);
+        }
+    }
+
+    async function finishGame() {
+        document.getElementById('feedback').innerHTML = '<span style="color:var(--accent)">Excellent! You know all your colors! 🌈</span>';
+
+        await fetch('/api/log_activity', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                type: 'Color Mastery',
+                score: score,
+                details: 'Successfully matched all primary and secondary colors.'
+            })
+        });
+
+        setTimeout(() => {
+            alert(`Great Job! Final Score: ${score}`);
+            window.location.href = '/games';
+        }, 1200);
+    }
+
+    initGame();
+</script>
+{% endblock %}

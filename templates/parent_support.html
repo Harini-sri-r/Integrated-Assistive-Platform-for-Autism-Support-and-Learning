@@ -1,0 +1,144 @@
+{% extends "base.html" %}
+
+{% block head %}
+<style>
+    .support-container {
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 2rem;
+    }
+
+    .support-header {
+        background: #ffffff;
+        border-radius: 12px;
+        border: 1px solid var(--border);
+        padding: 2rem;
+        margin-bottom: 2rem;
+    }
+
+    .support-title {
+        font-size: 2rem;
+        font-weight: 800;
+        margin: 0 0 0.5rem 0;
+        color: #000;
+    }
+
+    .support-subtitle {
+        margin: 0;
+        font-size: 0.95rem;
+        color: #000;
+        opacity: 0.7;
+    }
+
+    .tip-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+
+    .tip-card {
+        background: #ffffff;
+        border-radius: 10px;
+        border: 1px solid var(--border);
+        padding: 1.25rem 1.5rem;
+        font-size: 0.9rem;
+        line-height: 1.5;
+    }
+
+    .tip-label {
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: #6b7280;
+        margin-bottom: 0.5rem;
+    }
+
+    .video-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 1.25rem;
+    }
+
+    .video-link-card {
+        background: #ffffff;
+        border-radius: 10px;
+        border: 1px solid var(--border);
+        padding: 1rem 1.25rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.35rem;
+        text-decoration: none;
+        color: #000;
+        transition: all 0.2s ease;
+    }
+
+    .video-link-card:hover {
+        border-color: #000;
+        box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+        transform: translateY(-2px);
+    }
+
+    .video-link-title {
+        font-size: 0.98rem;
+        font-weight: 700;
+    }
+
+    .video-link-desc {
+        font-size: 0.85rem;
+        color: #6b7280;
+    }
+
+    .video-link-meta {
+        margin-top: 0.25rem;
+        font-size: 0.8rem;
+        color: #9ca3af;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="support-container">
+    <div class="support-header">
+        <h1 class="support-title">Parent Support & Tips</h1>
+        <p class="support-subtitle">
+            Gentle, practical ideas to support your child at home. Recommendations are currently
+            focused on the <strong>{{ lowest_domain }}</strong> area.
+        </p>
+    </div>
+
+    <!-- Quick Tips -->
+    <h3 style="margin-bottom: 1rem; font-weight: 700; color: #000;">Calm, Everyday Tips</h3>
+    <div class="tip-grid">
+        {% for tip in quick_tips %}
+        <div class="tip-card">
+            <div class="tip-label">Care Tip</div>
+            <div>{{ tip }}</div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Video Recommendations -->
+    <div style="margin-top: 2rem;">
+        <h3 style="margin-bottom: 1rem; font-weight: 700; color: #000;">
+            <i class="fab fa-youtube" style="color: #ff0000;"></i>
+            Recommended Support Videos
+        </h3>
+        <p style="font-size: 0.9rem; color: #6b7280; margin-bottom: 1.5rem;">
+            These open in YouTube in a new tab so you avoid blocked or unavailable embeds.
+        </p>
+        <div class="video-grid">
+            {% for video in videos %}
+            <a class="video-link-card" href="https://www.youtube.com/watch?v={{ video.id }}" target="_blank" rel="noopener noreferrer">
+                <div class="video-link-title">
+                    <i class="fab fa-youtube" style="color: #ff0000; margin-right: 0.35rem;"></i>{{ video.title }}
+                </div>
+                <div class="video-link-desc">Featured recent guide for parents.</div>
+                <div class="video-link-meta">Opens in YouTube • {{ video.category }}</div>
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

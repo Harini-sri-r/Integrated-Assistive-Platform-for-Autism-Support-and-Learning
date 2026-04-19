@@ -1,0 +1,138 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="text-center mb-2">
+    <h1>Social Explorer: Public Places</h1>
+    <p class="text-muted">How should we act when we are out and about? Select the best choice!</p>
+</div>
+
+<div class="glass-panel" style="max-width: 800px; margin: 0 auto; padding: 2rem; text-align: center;">
+    <div id="scenario-container">
+        <div class="glass-card mb-4" style="padding: 2.5rem; border-left: 8px solid var(--accent); text-align: left;">
+            <div id="place-icon" style="font-size: 4rem; margin-bottom: 1rem;">🏬</div>
+            <h2 id="scenario-title">At the Grocery Store</h2>
+            <p id="scenario-text" style="font-size: 1.3rem; line-height: 1.6; opacity: 0.9;">
+                You are walking with your parents. You see some candy you really like on a high shelf. What do you do?
+            </p>
+        </div>
+
+        <div id="choice-buttons" style="display: flex; flex-direction: column; gap: 1rem;">
+            <!-- Buttons injected here -->
+        </div>
+    </div>
+
+    <div id="feedback" class="mt-4" style="min-height: 60px; font-size: 1.3rem; font-weight: bold; line-height: 1.4;">
+    </div>
+    <div id="progress" class="mt-2 text-muted">Scenario 1 of 4</div>
+</div>
+
+<script>
+    const scenarios = [
+        {
+            place: "Grocery Store",
+            icon: "🏬",
+            desc: "You see some candy you really like on a high shelf. What do you do?",
+            choices: [
+                { text: "Try to climb the shelf to get it myself.", correct: false, explanation: "Climbing shelves is unsafe! You might fall or break things." },
+                { text: "Ask my parent politely if we can get some.", correct: true, explanation: "Asking politely is the best way to socializes your needs!" },
+                { text: "Start crying so they notice I want it.", correct: false, explanation: "Crying makes it hard for adults to understand what you need." }
+            ]
+        },
+        {
+            place: "The Library",
+            icon: "📚",
+            desc: "It is very quiet inside the library. You want to tell your friend about a cool book. What do you do?",
+            choices: [
+                { text: "Shout across the room so they hear me.", correct: false, explanation: "Shouting disturbs other people who are reading." },
+                { text: "Go over and whisper quietly in their ear.", correct: true, explanation: "Whispering helps keep the library quiet for everyone." },
+                { text: "Run to them and jump up and down.", correct: false, explanation: "Running inside can be dangerous and loud." }
+            ]
+        },
+        {
+            place: "The Park",
+            icon: "🌳",
+            desc: "All the swings are being used. You really want to swing. What do you do?",
+            choices: [
+                { text: "Push someone off so I can have a turn.", correct: false, explanation: "Pushing is unkind and can hurt your friends." },
+                { text: "Wait patiently and ask nicely for the next turn.", correct: true, explanation: "Waiting and asking nicely shows you are a great friend!" },
+                { text: "Go home because it's not fair.", correct: false, explanation: "Sometimes we have to wait, but it's still fun to be at the park!" }
+            ]
+        },
+        {
+            place: "A Restaurant",
+            icon: "🍽️",
+            desc: "Your food is taking a long time to arrive. You are feeling very wiggly. What can you do?",
+            choices: [
+                { text: "Run around the tables until the food comes.", correct: false, explanation: "Servers are carrying heavy trays; running is dangerous." },
+                { text: "Sit nicely and play a quiet game or draw.", correct: true, explanation: "Quiet activities help you wait while others are eating." },
+                { text: "Bang my fork on the table to show I'm hungry.", correct: false, explanation: "Banging forks is very loud and can bother other diners." }
+            ]
+        }
+    ];
+
+    let currentIdx = 0;
+    let score = 0;
+
+    function loadScenario() {
+        const s = scenarios[currentIdx];
+        document.getElementById('place-icon').innerText = s.icon;
+        document.getElementById('scenario-title').innerText = `At the ${s.place}`;
+        document.getElementById('scenario-text').innerText = s.desc;
+
+        const btnContainer = document.getElementById('choice-buttons');
+        btnContainer.innerHTML = s.choices.map((c, i) => `
+            <button onclick="handleChoice(${i})" class="glass-card" style="text-align: left; padding: 1.5rem; font-size: 1.1rem; transition: all 0.2s; cursor: pointer;">
+                ${c.text}
+            </button>
+        `).join('');
+
+        document.getElementById('feedback').innerText = "";
+        document.getElementById('progress').innerText = `Scenario ${currentIdx + 1} of ${scenarios.length}`;
+    }
+
+    async function handleChoice(index) {
+        const s = scenarios[currentIdx];
+        const choice = s.choices[index];
+        const feedback = document.getElementById('feedback');
+
+        if (choice.correct) {
+            feedback.innerHTML = `<span style="color: #4ade80">Spot on! ✨</span><br><small style="font-weight: normal; opacity: 0.8;">${choice.explanation}</small>`;
+            score += 25;
+        } else {
+            feedback.innerHTML = `<span style="color: #f87171">Think again... ❌</span><br><small style="font-weight: normal; opacity: 0.8;">${choice.explanation}</small>`;
+        }
+
+        setTimeout(() => {
+            currentIdx++;
+            if (currentIdx < scenarios.length) {
+                loadScenario();
+            } else {
+                finishActivity();
+            }
+        }, 3500);
+    }
+
+    async function finishActivity() {
+        document.getElementById('scenario-container').innerHTML = `
+            <div class="glass-card" style="padding: 3rem;">
+                <h2 style="font-size: 3rem;">Social Master!</h2>
+                <p style="font-size: 1.5rem; margin: 1rem 0;">You know exactly how to be a star in public!</p>
+                <div style="font-size: 5rem;">🌟🙌</div>
+                <button class="btn-primary mt-2" onclick="window.location.href='/learning'">Back to Hub</button>
+            </div>
+        `;
+
+        await fetch('/api/log_activity', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                type: 'Social Adventure',
+                score: score,
+                details: 'Completed Public Places social rule module.'
+            })
+        });
+    }
+
+    loadScenario();
+</script>
+{% endblock %}

@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="glass-panel" style="max-width: 1000px; margin: 0 auto; padding: 2rem;">
+    <h1 style="color: #000; font-size: 2.5rem; margin-bottom: 0.5rem;"><i class="fas fa-brain text-primary"></i> Machine Learning Evaluation</h1>
+    <p class="text-muted" style="margin-bottom: 2rem;">A dedicated dashboard for evaluating our Data Science pipelines.</p>
+
+    <div class="grid-2" style="gap: 2rem;">
+        <!-- Card 1: Random Forest Metrics -->
+        <div class="glass-card" style="border-top: 4px solid #10b981;">
+            <h2 style="font-size: 1.5rem; margin-bottom: 1rem;"><i class="fas fa-project-diagram"></i> Random Forest Metrics</h2>
+            <p style="font-size: 0.9rem; margin-bottom: 1rem;">Analyzes Journal Stress & Game logs to output behavioral predictions.</p>
+            
+            <div style="background: #f8fafc; padding: 1rem; border-radius: 8px; font-family: monospace; font-size: 0.9rem; line-height: 1.5; border: 1px solid #e2e8f0; margin-bottom: 1rem;">
+                Accuracy:  <b>0.94</b><br>
+                Precision: <b>0.97</b><br>
+                Recall:    <b>0.91</b><br>
+                F1-Score:  <b>0.94</b>
+            </div>
+
+            <div style="text-align: center;">
+                <p style="font-weight: 700; margin-bottom: 0.5rem; color: #475569;">Confusion Matrix</p>
+                <img src="{{ url_for('static', filename='img/confusion_matrix.png') }}" style="max-width: 100%; border-radius: 8px; border: 1px solid var(--border);" alt="Confusion Matrix">
+            </div>
+        </div>
+
+        <!-- Card 2: BERT vs VADER Playground -->
+        <div class="glass-card" style="border-top: 4px solid #3b82f6;">
+            <h2 style="font-size: 1.5rem; margin-bottom: 1rem;"><i class="fas fa-robot"></i> Sentiment Engine Trial</h2>
+            <p style="font-size: 0.9rem; margin-bottom: 1rem;">Compare the rule-based NLTK VADER against the Neural Network DistilBERT in real-time.</p>
+
+            <textarea id="trial-text" class="form-input" rows="4" style="width: 100%; margin-bottom: 1rem; font-size: 1rem;" placeholder="Type a complex sentence here to analyze... e.g. 'I was terrified of the dark but I feel proud I faced it.'"></textarea>
+            
+            <button onclick="testModels()" class="btn-primary" id="test-btn" style="width: 100%; margin-bottom: 1.5rem;">
+                <i class="fas fa-search"></i> Evaluate Sentence
+            </button>
+
+            <div style="display: flex; flex-direction: column; gap: 1rem;">
+                <div style="background: white; border: 1px solid #e2e8f0; padding: 1rem; border-radius: 8px;">
+                    <h4 style="margin: 0 0 0.5rem 0; color: #475569;"><i class="fas fa-book"></i> VADER (Rule-Based)</h4>
+                    <div id="vader-result" style="font-weight: 700; font-family: monospace; font-size: 1.1rem; color: #000;">Awaiting...</div>
+                </div>
+
+                <div style="background: white; border: 1px solid #e2e8f0; padding: 1rem; border-radius: 8px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);">
+                    <h4 style="margin: 0 0 0.5rem 0; color: #1e40af;"><i class="fas fa-network-wired"></i> DistilBERT (Transformer)</h4>
+                    <div id="bert-result" style="font-weight: 700; font-family: monospace; font-size: 1.1rem; color: #000;">Awaiting...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    async function testModels() {
+        const text = document.getElementById('trial-text').value.trim();
+        const btn = document.getElementById('test-btn');
+        const vResult = document.getElementById('vader-result');
+        const bResult = document.getElementById('bert-result');
+
+        if (!text) {
+            alert('Please enter a sentence to evaluate.');
+            return;
+        }
+
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Analyzing...';
+        btn.disabled = true;
+
+        try {
+            const resp = await fetch('/api/ml_compare', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ text: text })
+            });
+            const data = await resp.json();
+
+            vResult.innerHTML = data.vader;
+            bResult.innerHTML = data.bert;
+
+        } catch (e) {
+            vResult.innerHTML = "Network Error";
+            bResult.innerHTML = "Network Error";
+        } finally {
+            btn.innerHTML = '<i class="fas fa-search"></i> Evaluate Sentence';
+            btn.disabled = false;
+        }
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+
+{% block head %}
+<!-- Load face-api.js from CDN -->
+
+<style>
+    #video-container {
+        position: relative;
+        width: 100%;
+        max-width: 640px;
+        margin: 0 auto;
+        border-radius: 16px;
+        overflow: hidden;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    }
+
+    video {
+        width: 100%;
+        height: auto;
+        display: block;
+        transform: scaleX(-1);
+    }
+
+    canvas {
+        position: absolute;
+        top: 0;
+        left: 0;
+    }
+
+    .auth-status {
+        font-size: 2rem;
+        font-weight: 700;
+        text-align: center;
+        margin: 1.5rem 0;
+        min-height: 3rem;
+    }
+
+    .status-scanning {
+        color: #60a5fa;
+        animation: pulse 2s infinite;
+    }
+
+    .status-success {
+        color: #4ade80;
+    }
+
+    .status-error {
+        color: #f87171;
+    }
+
+    @keyframes pulse {
+
+        0%,
+        100% {
+            opacity: 1;
+        }
+
+        50% {
+            opacity: 0.5;
+        }
+    }
+
+    .login-options {
+        margin-top: 2rem;
+        padding-top: 2rem;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="glass-panel text-center">
+    <h1 class="mb-2">Face Authentication</h1>
+    <p class="mb-2" style="color: var(--text-muted);">
+        Look at the camera to login with your face
+    </p>
+
+    <div id="video-container" style="display: none;">
+        <video id="video" width="640" height="480" autoplay muted></video>
+    </div>
+
+    <div class="auth-status status-scanning" id="auth-status">
+        Loading AI Models...
+    </div>
+
+    <div class="mt-2">
+        <button id="start-btn" class="btn-primary" disabled>
+            <i class="fas fa-video"></i> Start Camera
+        </button>
+    </div>
+
+    <div class="login-options">
+        <p style="color: var(--text-muted); margin-bottom: 1rem;">Or use traditional login:</p>
+        <a href="{{ url_for('login') }}" class="btn-secondary">
+            <i class="fas fa-key"></i> Login with Password
+        </a>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/face_authenticate.js') }}"></script>
+{% endblock %}

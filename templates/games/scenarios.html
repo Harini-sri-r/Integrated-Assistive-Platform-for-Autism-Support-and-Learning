@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="text-center mb-2">
+    <h1>Social Adventure</h1>
+    <p>What would you do? Choose the best answer! 🤔</p>
+    <div style="font-size: 1.2rem; margin-top: 0.5rem; color: var(--accent);">Score: <span id="scenario-score">0</span>
+    </div>
+</div>
+
+<div class="glass-panel"
+    style="max-width: 800px; margin: 0 auto; min-height: 400px; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center;">
+
+    <div id="scenario-container" style="width: 100%;">
+        <!-- Dynamic Content -->
+        <div id="scenario-icon" style="font-size: 5rem; margin-bottom: 2rem;">❓</div>
+        <h2 id="scenario-question" class="mb-2">Loading...</h2>
+
+        <div id="options-grid" style="display: grid; gap: 1rem; width: 100%; max-width: 600px; margin: 0 auto;">
+            <!-- Buttons injected here -->
+        </div>
+
+        <div id="feedback-area" style="margin-top: 2rem; font-size: 1.2rem; font-weight: bold; min-height: 60px;"></div>
+
+        <button id="next-scenario-btn" class="btn-primary mt-2" style="display: none;">Next Scenario <i
+                class="fas fa-arrow-right"></i></button>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/games_scenarios.js') }}"></script>
+{% endblock %}

@@ -1,0 +1,229 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="text-center mb-2">
+    <h1>AI Emotion Mirror</h1>
+    <p class="text-muted">Turn on your camera and try to match the expression on the right!</p>
+</div>
+
+<div class="glass-panel" style="max-width: 1000px; margin: 0 auto; padding: 1.5rem;">
+    <div class="grid-2" style="display: grid; grid-template-columns: 1.5fr 1fr; gap: 2rem;">
+        <!-- Camera View -->
+        <div class="glass-card"
+            style="padding: 1rem; position: relative; background: #000; overflow: hidden; border-radius: 20px;">
+            <video id="webcam" autoplay playsinline
+                style="width: 100%; height: auto; border-radius: 15px; transform: scaleX(-1);"></video>
+            <canvas id="output-canvas"
+                style="position: absolute; top: 1rem; left: 1rem; width: calc(100% - 2rem); height: auto; pointer-events: none; transform: scaleX(-1);"></canvas>
+
+            <div id="camera-loading"
+                style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center;">
+                <div class="spinner-border text-light" role="status"></div>
+                <p class="text-light mt-2">Initializing AI...</p>
+            </div>
+        </div>
+
+        <!-- Target, Analysis & Breakdown -->
+        <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+            <!-- Target Card -->
+            <div class="glass-card text-center" style="padding: 1.5rem; border: 2px solid var(--accent);">
+                <h3 class="mb-2">Goal expression</h3>
+                <div id="target-emoji" style="font-size: 5rem; margin-bottom: 0.5rem;">😊</div>
+                <h2 id="target-text" style="color: var(--accent); font-size: 1.5rem;">HAPPY</h2>
+                <div class="progress-container mt-2"
+                    style="height: 10px; background: rgba(255,255,255,0.1); border-radius: 5px;">
+                    <div id="match-score" class="progress-bar"
+                        style="width: 0%; background: #4ade80; transition: width 0.2s;"></div>
+                </div>
+                <p class="mt-1 text-muted" style="font-size: 0.8rem;">Overall Match: <span id="score-text">0</span>%</p>
+            </div>
+
+            <!-- Face Part Breakdown Gauges -->
+            <div class="glass-card" style="padding: 1.5rem; background: rgba(99,102,241,0.1);">
+                <h4 class="mb-3 text-center"><i class="fas fa-microscope"></i> Analytics Breakdown</h4>
+
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between mb-1">
+                        <small>👄 Mouth Width</small>
+                        <small id="val-mouth">0%</small>
+                    </div>
+                    <div class="progress-container" style="height: 6px; background: rgba(255,255,255,0.1);">
+                        <div id="gauge-mouth" class="progress-bar" style="width: 0%; background: #60a5fa;"></div>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between mb-1">
+                        <small>👁️ Eye Aperture</small>
+                        <small id="val-eyes">0%</small>
+                    </div>
+                    <div class="progress-container" style="height: 6px; background: rgba(255,255,255,0.1);">
+                        <div id="gauge-eyes" class="progress-bar" style="width: 0%; background: #facc15;"></div>
+                    </div>
+                </div>
+
+                <div class="mb-0">
+                    <div class="d-flex justify-content-between mb-1">
+                        <small>🤨 Brow Tension</small>
+                        <small id="val-brows">0%</small>
+                    </div>
+                    <div class="progress-container" style="height: 6px; background: rgba(255,255,255,0.1);">
+                        <div id="gauge-brows" class="progress-bar" style="width: 0%; background: #f87171;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="glass-card" style="padding: 1rem;">
+                <h4>Activity Log</h4>
+                <div id="camera-log" style="font-size: 0.8rem; max-height: 100px; overflow-y: auto;">
+                    <p class="text-muted">Analyzing expressions...</p>
+                </div>
+            </div>
+
+            <button onclick="nextTarget()" class="btn-primary" style="width: 100%;">Skip Expression</button>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils"></script>
+
+<script>
+    const videoElement = document.getElementById('webcam');
+    const canvasElement = document.getElementById('output-canvas');
+    const canvasCtx = canvasElement.getContext('2d');
+    const loadingDiv = document.getElementById('camera-loading');
+
+    const targets = [
+        { label: "HAPPY", emoji: "😊", points: 50 },
+        { label: "SAD", emoji: "😢", points: 60 },
+        { label: "SURPRISED", emoji: "😲", points: 70 },
+        { label: "ANGRY", emoji: "😠", points: 80 }
+    ];
+
+    let currentTargetIdx = 0;
+    let xpEarned = 0;
+
+    function nextTarget() {
+        currentTargetIdx = (currentTargetIdx + 1) % targets.length;
+        document.getElementById('target-emoji').innerText = targets[currentTargetIdx].emoji;
+        document.getElementById('target-text').innerText = targets[currentTargetIdx].label;
+        document.getElementById('match-score').style.width = "0%";
+        document.getElementById('score-text').innerText = "0";
+    }
+
+    async function logEmotionXP(label, score, metrics) {
+        const timestamp = new Date().toLocaleTimeString();
+        const log = document.getElementById('camera-log');
+        if (log.innerHTML.includes('Analyzing')) log.innerHTML = '';
+
+        log.innerHTML = `<p style="color: #4ade80; font-weight: bold;">[${timestamp}] ${label} Mastery! (+${score} XP)</p>` + log.innerHTML;
+
+        await fetch('/api/log_activity', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                type: 'Advanced Expression Analysis',
+                score: score,
+                details: `Matched ${label} expression with ${Math.round(metrics.match)}% accuracy.`,
+                metadata: metrics // New: Sending detailed metrics report
+            })
+        });
+    }
+
+    function onResults(results) {
+        loadingDiv.style.display = 'none';
+        canvasCtx.save();
+        canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
+
+        if (results.multiFaceLandmarks) {
+            for (const landmarks of results.multiFaceLandmarks) {
+                // --- Part-Based Analysis ---
+                // Mouth
+                const mTop = landmarks[13], mBot = landmarks[14], mLeft = landmarks[61], mRight = landmarks[291];
+                const mouthWidth = Math.sqrt(Math.pow(mLeft.x - mRight.x, 2) + Math.pow(mLeft.y - mRight.y, 2));
+                const mouthHeight = Math.sqrt(Math.pow(mTop.x - mBot.x, 2) + Math.pow(mTop.y - mBot.y, 2));
+
+                // Eyes (Left eye top/bottom: 159/145)
+                const eTop = landmarks[159], eBot = landmarks[145];
+                const eyeAperture = Math.abs(eTop.y - eBot.y);
+
+                // Brows (Left brow inner: 52 vs eye inner corner: 133)
+                const browInner = landmarks[52], eyeInner = landmarks[133];
+                const browTension = Math.abs(browInner.y - eyeInner.y);
+
+                // Normalization (approximate for display)
+                const mW_norm = Math.min(100, Math.round(mouthWidth * 500));
+                const eA_norm = Math.min(100, Math.round(eyeAperture * 2000));
+                const bT_norm = Math.min(100, Math.round(browTension * 1500));
+
+                // Update Gauges
+                document.getElementById('gauge-mouth').style.width = mW_norm + "%";
+                document.getElementById('val-mouth').innerText = mW_norm + "%";
+                document.getElementById('gauge-eyes').style.width = eA_norm + "%";
+                document.getElementById('val-eyes').innerText = eA_norm + "%";
+                document.getElementById('gauge-brows').style.width = bT_norm + "%";
+                document.getElementById('val-brows').innerText = bT_norm + "%";
+
+                const target = targets[currentTargetIdx].label;
+                let matchPercent = 0;
+                const ratio = mouthHeight / mouthWidth;
+
+                if (target === "HAPPY") {
+                    matchPercent = (mouthWidth > 0.08) ? Math.min(100, (mouthWidth * 800)) : 0;
+                } else if (target === "SURPRISED") {
+                    matchPercent = Math.min(100, (ratio * 150));
+                } else if (target === "SAD") {
+                    matchPercent = (mouthWidth < 0.08 && eyeAperture < 0.03) ? 95 : 20;
+                } else if (target === "ANGRY") {
+                    matchPercent = (browTension < 0.04) ? 95 : 30; // Closer brow to eye
+                }
+
+                document.getElementById('match-score').style.width = Math.min(100, matchPercent) + "%";
+                document.getElementById('score-text').innerText = Math.round(matchPercent);
+
+                if (matchPercent > 92) {
+                    const metrics = { mouth: mW_norm, eyes: eA_norm, brows: bT_norm, match: matchPercent };
+                    logEmotionXP(target, targets[currentTargetIdx].points, metrics);
+                    nextTarget();
+                }
+            }
+        }
+        canvasCtx.restore();
+    }
+
+    const faceMesh = new FaceMesh({
+        locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`
+    });
+
+    faceMesh.setOptions({
+        maxNumFaces: 1,
+        refineLandmarks: true,
+        minDetectionConfidence: 0.5,
+        minTrackingConfidence: 0.5
+    });
+
+    faceMesh.onResults(onResults);
+
+    const camera = new Camera(videoElement, {
+        onFrame: async () => {
+            await faceMesh.send({ image: videoElement });
+        },
+        width: 640,
+        height: 480
+    });
+    camera.start();
+
+    // Resize canvas
+    window.addEventListener('resize', () => {
+        canvasElement.width = videoElement.clientWidth;
+        canvasElement.height = videoElement.clientHeight;
+    });
+    setTimeout(() => {
+        canvasElement.width = videoElement.clientWidth || 640;
+        canvasElement.height = videoElement.clientHeight || 480;
+    }, 2000);
+
+</script>
+{% endblock %}

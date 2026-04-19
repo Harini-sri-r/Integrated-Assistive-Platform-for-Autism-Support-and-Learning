@@ -1,0 +1,323 @@
+{% extends "base.html" %}
+
+{% block head %}
+<style>
+    :root {
+        --therapy-bg: #f8fafc;
+        --therapy-card: #ffffff;
+        --therapy-border: #e2e8f0;
+        --therapy-text: #1e293b;
+        --therapy-accent: #6366f1;
+        /* Indigo */
+    }
+
+    body {
+        background-color: var(--therapy-bg);
+    }
+
+    .container {
+        max-width: 1000px;
+        margin: 2rem auto;
+        padding: 0 1rem;
+    }
+
+    /* Page Header */
+    .page-header {
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+
+    .page-title {
+        font-size: 2rem;
+        color: var(--therapy-text);
+        margin-bottom: 0.5rem;
+    }
+
+    .page-subtitle {
+        color: #64748b;
+    }
+
+    /* Form Card */
+    .form-card {
+        background: var(--therapy-card);
+        border: 1px solid var(--therapy-border);
+        border-radius: 12px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    }
+
+    .form-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        margin-bottom: 1.5rem;
+        color: var(--therapy-text);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    /* Grid for Inputs */
+    .form-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.5rem;
+    }
+
+    .input-group {
+        margin-bottom: 1.5rem;
+    }
+
+    .input-group.full-width {
+        grid-column: 1 / -1;
+    }
+
+    .input-label {
+        display: block;
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: #334155;
+        margin-bottom: 0.5rem;
+    }
+
+    .input-control {
+        width: 100%;
+        padding: 0.75rem;
+        border: 1px solid #cbd5e1;
+        border-radius: 6px;
+        font-family: inherit;
+        font-size: 0.95rem;
+        transition: border-color 0.2s;
+    }
+
+    .input-control:focus {
+        outline: none;
+        border-color: var(--therapy-accent);
+        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+    }
+
+    textarea.input-control {
+        min-height: 100px;
+        resize: vertical;
+        line-height: 1.6;
+    }
+
+    .btn-submit {
+        background: var(--therapy-accent);
+        color: white;
+        padding: 0.75rem 2rem;
+        border-radius: 6px;
+        font-weight: 600;
+        border: none;
+        cursor: pointer;
+        width: 100%;
+        font-size: 1rem;
+        transition: background 0.2s;
+    }
+
+    .btn-submit:hover {
+        opacity: 0.9;
+    }
+
+    /* List Section */
+    .list-section {
+        margin-top: 3rem;
+    }
+
+    .list-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        margin-bottom: 1.5rem;
+        color: var(--therapy-text);
+    }
+
+    .appointment-card {
+        background: white;
+        border: 1px solid var(--therapy-border);
+        border-radius: 8px;
+        padding: 1rem 1.5rem;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        transition: transform 0.1s;
+    }
+
+    .appointment-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    }
+
+    .appt-date {
+        font-weight: 700;
+        font-size: 1.1rem;
+        color: var(--therapy-text);
+        width: 80px;
+        text-align: center;
+        line-height: 1.2;
+    }
+
+    .appt-date span {
+        display: block;
+        font-size: 0.8rem;
+        color: #64748b;
+        font-weight: 500;
+        text-transform: uppercase;
+    }
+
+    .appt-details {
+        flex: 1;
+        padding: 0 1.5rem;
+        border-left: 1px solid #e2e8f0;
+        margin-left: 1.5rem;
+    }
+
+    .appt-title {
+        font-weight: 600;
+        color: var(--therapy-text);
+        margin-bottom: 0.25rem;
+    }
+
+    .appt-meta {
+        font-size: 0.875rem;
+        color: #64748b;
+    }
+
+    .appt-status {
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+
+    .status-Scheduled {
+        background: #dbeafe;
+        color: #1e40af;
+    }
+
+    .status-Completed {
+        background: #dcfce7;
+        color: #166534;
+    }
+
+    .status-Cancelled {
+        background: #fee2e2;
+        color: #991b1b;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+
+    <div class="page-header">
+        <h1 class="page-title">Therapy Schedule</h1>
+        <p class="page-subtitle">Manage sessions, track progress, and organize therapeutic interventions.</p>
+    </div>
+
+    <!-- The Form -->
+    <div class="form-card">
+        <div class="form-title">
+            <i class="fas fa-plus-circle" style="color: var(--therapy-accent);"></i>
+            Schedule New Session
+        </div>
+
+        <form action="{{ url_for('therapy') }}" method="POST">
+            <div class="form-grid">
+                <div class="input-group full-width">
+                    <label class="input-label">Session Title / Focus</label>
+                    <input type="text" name="title" class="input-control" placeholder="e.g. Speech Fluency Assessment"
+                        required>
+                </div>
+
+                <div class="input-group">
+                    <label class="input-label">Date</label>
+                    <input type="date" name="date" class="input-control" required>
+                </div>
+
+                <div class="input-group">
+                    <label class="input-label">Time</label>
+                    <input type="time" name="time" class="input-control" required>
+                </div>
+
+                <div class="input-group">
+                    <label class="input-label">Status</label>
+                    <select name="status" class="input-control">
+                        <option value="Scheduled">Scheduled</option>
+                        <option value="Completed">Completed</option>
+                        <option value="Cancelled">Cancelled</option>
+                    </select>
+                </div>
+
+                <div class="input-group">
+                    <label class="input-label">Assign Learning Module (Homework)</label>
+                    <select name="homework" class="input-control">
+                        <option value="">-- No Assignment --</option>
+                        <option value="vocab">Vocabulary Acquisition</option>
+                        <option value="story">Narrative Comprehension</option>
+                        <option value="social">Social Scenarios</option>
+                    </select>
+                </div>
+
+                <div class="input-group full-width">
+                    <label class="input-label">Session notes</label>
+                    <textarea name="notes" class="input-control" placeholder="Enter session notes..."></textarea>
+                </div>
+
+                <div class="input-group full-width" style="margin-bottom: 0;">
+                    <button type="submit" class="btn-submit">Add Session to Schedule</button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- The List -->
+    <div class="list-section">
+        <h2 class="list-title">Upcoming Sessions</h2>
+
+        {% if appointments %}
+        {% for appt in appointments %}
+        <div class="appointment-card">
+            <div class="appt-date">
+                {{ appt.date }}
+                <span>{{ appt.time }}</span>
+            </div>
+            <div class="appt-details">
+                <div class="appt-title">{{ appt.title }}</div>
+                <div class="appt-meta">
+                    {% if appt.homework %}
+                    <i class="fas fa-book"></i> Homework: {{ appt.homework }}
+                    {% endif %}
+                    {% if appt.notes %}
+                    <br><span style="font-style: italic;">"{{ appt.notes[:50] }}..."</span>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div style="display: flex; align-items: center; gap: 1rem;">
+                <form action="{{ url_for('update_therapy', appt_id=appt.id) }}" method="POST" style="margin: 0;">
+                    <select name="status" class="input-control" onchange="this.form.submit()" style="padding: 0.25rem 0.5rem; font-size: 0.8rem; width: auto;">
+                        <option value="Scheduled" {% if appt.status == 'Scheduled' %}selected{% endif %}>Scheduled</option>
+                        <option value="Completed" {% if appt.status == 'Completed' %}selected{% endif %}>Completed</option>
+                        <option value="Cancelled" {% if appt.status == 'Cancelled' %}selected{% endif %}>Cancelled</option>
+                    </select>
+                </form>
+
+                <form action="{{ url_for('delete_therapy', appt_id=appt.id) }}" method="POST" style="margin: 0;" onsubmit="return confirm('Delete this session?')">
+                    <button type="submit" class="btn-text" style="color: #f87171; border: none; background: none; cursor: pointer; padding: 0.5rem;">
+                        <i class="fas fa-trash-alt"></i>
+                    </button>
+                </form>
+            </div>
+        </div>
+        {% endfor %}
+        {% else %}
+        <div
+            style="text-align: center; padding: 3rem; color: #94a3b8; background: white; border-radius: 8px; border: 1px dashed #cbd5e1;">
+            <p>No upcoming sessions scheduled.</p>
+        </div>
+        {% endif %}
+    </div>
+
+</div>
+{% endblock %}

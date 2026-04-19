@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="text-center mb-2">
+    <h1>Plurals Explorer</h1>
+    <p class="text-muted">Is it just one, or are there many? Let's find out!</p>
+</div>
+
+<div class="glass-panel" style="max-width: 800px; margin: 0 auto; padding: 2rem; text-align: center;">
+    <div id="quiz-container">
+        <div id="visual-display" class="d-flex justify-content-center align-items-center mb-4"
+            style="min-height: 200px; gap: 2rem;">
+            <!-- Emojis will be injected here -->
+        </div>
+
+        <h2 id="question-text" class="mb-4" style="font-size: 2rem;">How should we say it?</h2>
+
+        <div id="options-grid" class="grid-2" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+            <!-- Choice buttons -->
+        </div>
+    </div>
+
+    <div id="feedback" class="mt-4" style="min-height: 50px; font-size: 1.5rem; font-weight: bold;"></div>
+    <div id="progress" class="mt-2 text-muted">Page 1 of 5</div>
+</div>
+
+<script>
+    const quizData = [
+        { emoji: "🍎", count: 1, singular: "Apple", plural: "Apples", correct: "Apple" },
+        { emoji: "🐱", count: 3, singular: "Cat", plural: "Cats", correct: "Cats" },
+        { emoji: "🚗", count: 1, singular: "Car", plural: "Cars", correct: "Car" },
+        { emoji: "🌳", count: 2, singular: "Tree", plural: "Trees", correct: "Trees" },
+        { emoji: "🐶", count: 4, singular: "Dog", plural: "Dogs", correct: "Dogs" }
+    ];
+
+    let currentIdx = 0;
+    let score = 0;
+
+    function loadQuestion() {
+        const q = quizData[currentIdx];
+        const display = document.getElementById('visual-display');
+        display.innerHTML = "";
+
+        for (let i = 0; i < q.count; i++) {
+            const span = document.createElement('span');
+            span.style.fontSize = "5rem";
+            span.innerText = q.emoji;
+            display.appendChild(span);
+        }
+
+        const options = document.getElementById('options-grid');
+        options.innerHTML = `
+            <button onclick="checkAnswer('${q.singular}')" class="btn-secondary" style="font-size: 1.5rem; padding: 1.5rem;">${q.singular}</button>
+            <button onclick="checkAnswer('${q.plural}')" class="btn-secondary" style="font-size: 1.5rem; padding: 1.5rem;">${q.plural}</button>
+        `;
+
+        document.getElementById('feedback').innerText = "";
+        document.getElementById('progress').innerText = `Question ${currentIdx + 1} of ${quizData.length}`;
+    }
+
+    async function checkAnswer(choice) {
+        const q = quizData[currentIdx];
+        const feedback = document.getElementById('feedback');
+
+        if (choice === q.correct) {
+            feedback.innerHTML = '<span style="color: #4ade80">Yes! That is correct! ✨</span>';
+            score += 10;
+        } else {
+            feedback.innerHTML = `<span style="color: #f87171">Not quite! It's "${q.correct}". ❌</span>`;
+        }
+
+        setTimeout(() => {
+            currentIdx++;
+            if (currentIdx < quizData.length) {
+                loadQuestion();
+            } else {
+                finishQuiz();
+            }
+        }, 2000);
+    }
+
+    async function finishQuiz() {
+        document.getElementById('quiz-container').innerHTML = `
+            <div class="glass-card" style="padding: 3rem;">
+                <h2 style="font-size: 3rem;">Grammar Star!</h2>
+                <p style="font-size: 1.5rem; margin: 1rem 0;">You mastered singular and plural words!</p>
+                <div style="font-size: 5rem;">📖✨</div>
+                <button class="btn-primary mt-2" onclick="window.location.href='/learning'">Back to Hub</button>
+            </div>
+        `;
+
+        await fetch('/api/log_activity', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                type: 'Grammar Mastery',
+                score: score,
+                details: 'Correctly identified singular and plural nouns.'
+            })
+        });
+    }
+
+    loadQuestion();
+</script>
+{% endblock %}

@@ -1,0 +1,156 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="text-center mb-2">
+    <h1>Sorting Master</h1>
+    <p class="text-muted">Drag the items to the correct basket!</p>
+</div>
+
+<div class="glass-panel" style="max-width: 800px; margin: 0 auto; padding: 2rem;">
+    <div id="game-stats" class="d-flex justify-content-between mb-3" style="font-size: 1.2rem; font-weight: bold;">
+        <span>Score: <span id="score">0</span></span>
+        <span>Items Left: <span id="items-left">0</span></span>
+    </div>
+
+    <div class="grid-2" style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+        <div id="fruit-basket" class="glass-card basket" ondrop="drop(event, 'fruit')" ondragover="allowDrop(event)">
+            <div style="font-size: 3rem;">🍎</div>
+            <h3>Fruits</h3>
+        </div>
+        <div id="veggie-basket" class="glass-card basket" ondrop="drop(event, 'veggie')" ondragover="allowDrop(event)">
+            <div style="font-size: 3rem;">🥦</div>
+            <h3>Vegetables</h3>
+        </div>
+    </div>
+
+    <div id="item-dock" class="glass-panel mt-4"
+        style="min-height: 120px; display: flex; justify-content: center; align-items: center; gap: 1rem; flex-wrap: wrap;">
+        <!-- Draggable items injected here -->
+    </div>
+
+    <div id="feedback" class="text-center mt-3" style="min-height: 40px; font-size: 1.3rem; font-weight: bold;"></div>
+</div>
+
+<style>
+    .basket {
+        padding: 2rem;
+        text-align: center;
+        border: 2px dashed rgba(255, 255, 255, 0.2);
+        transition: all 0.3s;
+    }
+
+    .basket.drag-over {
+        background: rgba(255, 255, 255, 0.1);
+        border-color: var(--accent);
+        transform: scale(1.05);
+    }
+
+    .draggable-item {
+        font-size: 3rem;
+        cursor: grab;
+        padding: 0.5rem;
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 10px;
+        transition: transform 0.2s;
+        user-select: none;
+    }
+
+    .draggable-item:active {
+        cursor: grabbing;
+    }
+</style>
+
+<script>
+    const items = [
+        { emoji: "🍎", type: "fruit" },
+        { emoji: "🥦", type: "veggie" },
+        { emoji: "🍌", type: "fruit" },
+        { emoji: "🥕", type: "veggie" },
+        { emoji: "🍇", type: "fruit" },
+        { emoji: "🥔", type: "veggie" },
+        { emoji: "🍓", type: "fruit" },
+        { emoji: "🌽", type: "veggie" }
+    ];
+
+    let score = 0;
+    let itemsLeft = items.length;
+
+    function initGame() {
+        const dock = document.getElementById('item-dock');
+        dock.innerHTML = '';
+        itemsLeft = items.length;
+        document.getElementById('items-left').innerText = itemsLeft;
+
+        const shuffled = [...items].sort(() => Math.random() - 0.5);
+        shuffled.forEach((item, index) => {
+            const div = document.createElement('div');
+            div.className = 'draggable-item';
+            div.draggable = true;
+            div.id = `item-${index}`;
+            div.innerText = item.emoji;
+            div.dataset.type = item.type;
+            div.ondragstart = (e) => e.dataTransfer.setData("text", e.target.id);
+            dock.appendChild(div);
+        });
+    }
+
+    function allowDrop(e) {
+        e.preventDefault();
+        e.currentTarget.classList.add('drag-over');
+    }
+
+    // Handle drag leave
+    document.querySelectorAll('.basket').forEach(b => {
+        b.ondragleave = (e) => e.currentTarget.classList.remove('drag-over');
+    });
+
+    async function drop(e, basketType) {
+        e.preventDefault();
+        const basket = e.currentTarget;
+        basket.classList.remove('drag-over');
+
+        const id = e.dataTransfer.getData("text");
+        const item = document.getElementById(id);
+        const itemType = item.dataset.type;
+        const feedback = document.getElementById('feedback');
+
+        if (itemType === basketType) {
+            score += 10;
+            itemsLeft--;
+            item.remove();
+            feedback.innerHTML = '<span style="color:#4ade80">Correct! ✨</span>';
+            document.getElementById('score').innerText = score;
+            document.getElementById('items-left').innerText = itemsLeft;
+
+            if (itemsLeft === 0) {
+                finishGame();
+            }
+        } else {
+            feedback.innerHTML = '<span style="color:#f87171">Oops! Try the other basket. ❌</span>';
+            item.style.transform = "translateX(10px)";
+            setTimeout(() => item.style.transform = "translateX(0)", 100);
+        }
+    }
+
+    async function finishGame() {
+        document.getElementById('feedback').innerHTML = '<span style="color:var(--accent)">Amazing! You sorted everything! 🎉</span>';
+
+        await fetch('/api/log_activity', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                type: 'Sorting Master',
+                score: score,
+                details: 'Sorted all Fruits and Vegetables correctly.'
+            })
+        });
+
+        setTimeout(() => {
+            alert(`Game Complete! Score: ${score}`);
+            window.location.href = '/games';
+        }, 1000);
+    }
+
+    initGame();
+</script>
+{% endblock %}

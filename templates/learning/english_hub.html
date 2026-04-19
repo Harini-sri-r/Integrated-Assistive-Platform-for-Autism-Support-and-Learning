@@ -1,0 +1,295 @@
+{% extends "base.html" %}
+
+{% block head %}
+<style>
+    .learning-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 2rem;
+    }
+
+    /* Header */
+    .hub-header {
+        margin-bottom: 3rem;
+        background: white;
+        padding: 2rem;
+        border-radius: 12px;
+        border: 1px solid var(--border);
+    }
+
+    .hub-title {
+        font-size: 2rem;
+        font-weight: 800;
+        color: #000;
+        margin: 0 0 0.5rem 0;
+    }
+
+    .hub-subtitle {
+        color: #000;
+        opacity: 0.7;
+        font-size: 0.95rem;
+    }
+
+    /* Track Layout */
+    .track-section {
+        margin-bottom: 3rem;
+    }
+
+    .track-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 3px solid #000;
+    }
+
+    .track-title {
+        font-size: 1.25rem;
+        font-weight: 800;
+        color: #000;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .track-icon {
+        background: #000;
+        color: #fff;
+        width: 36px;
+        height: 36px;
+        border-radius: 4px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.1rem;
+    }
+
+    /* Module Grid */
+    .module-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 1.5rem;
+    }
+
+    .module-card {
+        background: white;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 1.5rem;
+        transition: all 0.2s;
+        text-decoration: none;
+        display: block;
+        position: relative;
+    }
+
+    .module-card:hover {
+        transform: translateY(-2px);
+        border-color: #000;
+    }
+
+    .module-card::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 4px;
+        background: transparent;
+        transition: background 0.2s;
+    }
+
+    .module-card:hover::before {
+        background: #000;
+    }
+
+    .module-title {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: #000;
+        margin-bottom: 0.5rem;
+        display: block;
+    }
+
+    .module-desc {
+        font-size: 0.875rem;
+        color: #000;
+        opacity: 0.7;
+        margin-bottom: 1rem;
+        line-height: 1.5;
+        display: block;
+    }
+
+    .module-meta {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 0.75rem;
+        color: #000;
+        border-top: 1px solid var(--border);
+        padding-top: 0.75rem;
+    }
+
+    .status-active {
+        color: #000;
+        font-weight: 800;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="learning-container">
+
+    <!-- Overview Header -->
+    <div class="hub-header">
+        <h1 class="hub-title">Therapeutic Learning Plan</h1>
+        <div class="hub-subtitle">Personalized Intervention Modules • Daily Goal: 3 Sessions</div>
+
+        <div style="margin-top: 1.5rem; background: #f3f4f6; height: 8px; border-radius: 4px; overflow: hidden; border: 1px solid #000;">
+            <div style="width: 35%; height: 100%; background: #000;"></div>
+        </div>
+        <div style="margin-top: 0.5rem; font-size: 0.8rem; color: #000; font-weight: 700; text-align: right;">Overall Mastery: 35%
+        </div>
+    </div>
+
+    <!-- Track 1: Communication -->
+    <div class="track-section">
+        <div class="track-header">
+            <div class="track-title">
+                <div class="track-icon"><i class="fas fa-comment-alt"></i></div>
+                Communication & Language Domain
+            </div>
+            <div style="font-size: 0.875rem; color: #64748b;">2 Active Modules</div>
+        </div>
+
+        <div class="module-grid">
+
+            <a href="{{ url_for('learning_magic_storybook') }}" class="module-card">
+                <span class="module-title">Narrative Comprehension</span>
+                <span class="module-desc">Sequencing and recall exercises based on structured texts.</span>
+                <div class="module-meta">
+                    <span><i class="fas fa-book-open"></i> 15 min</span>
+                    <span class="status-active">New Assignment</span>
+                </div>
+            </a>
+
+            <a href="{{ url_for('learning_vocab') }}" class="module-card">
+                <span class="module-title">Vocabulary Acquisition</span>
+                <span class="module-desc">Semantic mapping and word identification trials.</span>
+                <div class="module-meta">
+                    <span><i class="fas fa-layer-group"></i> Self-Paced</span>
+                    <span class="status-locked">In Progress</span>
+                </div>
+            </a>
+
+            <a href="{{ url_for('learning_grammar') }}" class="module-card">
+                <span class="module-title">Syntactic Structures</span>
+                <span class="module-desc">Sentence formulation and grammatical rule application.</span>
+                <div class="module-meta">
+                    <span><i class="fas fa-pencil-alt"></i> Level 2</span>
+                    <span class="status-active">Start</span>
+                </div>
+            </a>
+
+            <!-- Added Missing Module: English Word Excellence -->
+            <a href="{{ url_for('learning_english_words') }}" class="module-card">
+                <span class="module-title">Advanced Vocabulary</span>
+                <span class="module-desc">Interactive definition matching and spelling challenges.</span>
+                <div class="module-meta">
+                    <span><i class="fas fa-spell-check"></i> Challenge</span>
+                    <span class="status-active">Start</span>
+                </div>
+            </a>
+
+            <!-- Added Missing Module: Word Builder -->
+            <a href="{{ url_for('learning_word_builder') }}" class="module-card">
+                <span class="module-title">Morphology (Word Builder)</span>
+                <span class="module-desc">Understanding prefixes, suffixes, and root words.</span>
+                <div class="module-meta">
+                    <span><i class="fas fa-cubes"></i> Structural</span>
+                    <span class="status-active">Start</span>
+                </div>
+            </a>
+        </div>
+    </div>
+
+    <!-- Track 2: Social Cognition -->
+    <div class="track-section">
+        <div class="track-header">
+            <div class="track-title">
+                <div class="track-icon social-icon"><i class="fas fa-users"></i></div>
+                Social Cognition Domain
+            </div>
+        </div>
+
+        <div class="module-grid">
+            <a href="{{ url_for('emotion_matcher') }}" class="module-card">
+                <span class="module-title">Affect Recognition</span>
+                <span class="module-desc">Identifying facial expressions and emotional states.</span>
+                <div class="module-meta">
+                    <span><i class="fas fa-smile"></i> Visual Stimuli</span>
+                    <span class="status-active">Practice</span>
+                </div>
+            </a>
+
+            <a href="{{ url_for('learning_respectful') }}" class="module-card">
+                <span class="module-title">Social Scripting</span>
+                <span class="module-desc">Modeling appropriate responses in social interactions.</span>
+                <div class="module-meta">
+                    <span><i class="fas fa-handshake"></i> Scenarios</span>
+                    <span class="status-active">Start</span>
+                </div>
+            </a>
+
+            <a href="{{ url_for('learning_social_public') }}" class="module-card">
+                <span class="module-title">Public Context Rules</span>
+                <span class="module-desc">Understanding behavioral expectations in shared spaces.</span>
+                <div class="module-meta">
+                    <span><i class="fas fa-building"></i> Community</span>
+                    <span class="status-locked">Locked</span>
+                </div>
+            </a>
+        </div>
+    </div>
+
+    <!-- Track 3: Executive Function & Life Skills -->
+    <div class="track-section">
+        <div class="track-header">
+            <div class="track-title">
+                <div class="track-icon executive-icon"><i class="fas fa-brain"></i></div>
+                Executive Function & Adaptive Skills
+            </div>
+        </div>
+
+        <div class="module-grid">
+            <a href="{{ url_for('memory_match') }}" class="module-card">
+                <span class="module-title">Working Memory Training</span>
+                <span class="module-desc">Visual recall and information retention exercises.</span>
+                <div class="module-meta">
+                    <span><i class="fas fa-memory"></i> Cognitive</span>
+                    <span class="status-active">Daily Task</span>
+                </div>
+            </a>
+
+            <a href="{{ url_for('sorting_master') }}" class="module-card">
+                <span class="module-title">Categorization Logic</span>
+                <span class="module-desc">Sorting objects by attribute, function, and class.</span>
+                <div class="module-meta">
+                    <span><i class="fas fa-boxes"></i> Logic</span>
+                    <span class="status-active">Start</span>
+                </div>
+            </a>
+
+            <a href="{{ url_for('learning_life_skills') }}" class="module-card">
+                <span class="module-title">ADL: Morning Routine</span>
+                <span class="module-desc">Sequencing activities of daily living (ADL).</span>
+                <div class="module-meta">
+                    <span><i class="fas fa-sun"></i> Routines</span>
+                    <span class="status-active">Review</span>
+                </div>
+            </a>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

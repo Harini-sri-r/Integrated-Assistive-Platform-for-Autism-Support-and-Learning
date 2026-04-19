@@ -1,0 +1,216 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="text-center mb-2">
+    <h1>Word Builder: Prefixes & Suffixes</h1>
+    <p class="text-muted">Can you make new words by adding pieces to the start or end?</p>
+</div>
+
+<div class="glass-panel" style="max-width: 800px; margin: 0 auto; padding: 2rem; text-align: center;">
+    <div id="game-stats" class="d-flex justify-content-between mb-3">
+        <span>Score: <span id="score">0</span></span>
+        <span>Word <span id="current-word-num">1</span> of 5</span>
+    </div>
+
+    <div id="word-construction" class="d-flex justify-content-center align-items-center gap-2 mb-4"
+        style="min-height: 150px;">
+        <div id="drop-prefix" class="word-slot">Prefix</div>
+        <div id="root-word" class="glass-card"
+            style="padding: 1.5rem 3rem; font-size: 2.5rem; font-weight: bold; background: var(--accent); color: white;">
+            Happy</div>
+        <div id="drop-suffix" class="word-slot">Suffix</div>
+    </div>
+
+    <p id="instruction-text" class="mb-4" style="font-size: 1.2rem; font-weight: 600;">How do we say "Not Happy"?</p>
+
+    <div id="options-dock" class="glass-panel p-3"
+        style="display: flex; justify-content: center; gap: 1rem; flex-wrap: wrap;">
+        <!-- Pieces injected here -->
+    </div>
+
+    <div id="feedback" class="mt-4" style="min-height: 50px; font-size: 1.5rem; font-weight: bold;"></div>
+</div>
+
+<style>
+    .word-slot {
+        width: 150px;
+        height: 100px;
+        border: 2px dashed #94a3b8; /* Visible gray dashed border */
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+        transition: all 0.3s;
+        background: #f8fafc; /* Solid light background */
+        color: #64748b;
+    }
+
+    .word-slot.drag-over {
+        background: rgba(99, 102, 241, 0.2);
+        border-color: var(--accent);
+        transform: scale(1.05);
+    }
+
+    .word-piece {
+        padding: 1rem 2rem;
+        background: #fff;
+        color: #1e293b;
+        border-radius: 10px;
+        font-size: 1.5rem;
+        font-weight: bold;
+        cursor: pointer;
+        user-select: none;
+        border: 2px solid #cbd5e1;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+
+    .word-piece:active {
+        cursor: grabbing;
+    }
+</style>
+
+<script>
+    const levels = [
+        { root: "Happy", instruction: 'How do we say "Not Happy"?', type: 'prefix', correct: "Un", options: ["Un", "Pre", "Dis", "Re"] },
+        { root: "Play", instruction: 'How do we say "One who plays"?', type: 'suffix', correct: "er", options: ["ing", "er", "ly", "ness"] },
+        { root: "Write", instruction: 'How do we say "Write it again"?', type: 'prefix', correct: "Re", options: ["Re", "Un", "In", "Mis"] },
+        { root: "Kind", instruction: 'The quality of being kind is...', type: 'suffix', correct: "ness", options: ["ful", "ness", "ly", "ed"] },
+        { root: "Quick", instruction: 'How do we say "In a quick way"?', type: 'suffix', correct: "ly", options: ["ly", "er", "est", "ion"] }
+    ];
+
+    let currentIdx = 0;
+    let score = 0;
+
+    function loadLevel() {
+        const lvl = levels[currentIdx];
+        document.getElementById('root-word').innerText = lvl.root;
+        document.getElementById('instruction-text').innerText = lvl.instruction;
+        document.getElementById('current-word-num').innerText = currentIdx + 1;
+
+        const prefixSlot = document.getElementById('drop-prefix');
+        const suffixSlot = document.getElementById('drop-suffix');
+
+        prefixSlot.innerText = "Prefix";
+        prefixSlot.style.background = "rgba(255,255,255,0.05)";
+        prefixSlot.className = "word-slot";
+
+        suffixSlot.innerText = "Suffix";
+        suffixSlot.style.background = "rgba(255,255,255,0.05)";
+        suffixSlot.className = "word-slot";
+
+        if (lvl.type === 'prefix') {
+            prefixSlot.ondragover = allowDrop;
+            prefixSlot.ondrop = (e) => handleDrop(e, 'prefix');
+            suffixSlot.ondragover = null;
+            suffixSlot.ondrop = null;
+            suffixSlot.style.opacity = "0.3";
+            prefixSlot.style.opacity = "1";
+        } else {
+            suffixSlot.ondragover = allowDrop;
+            suffixSlot.ondrop = (e) => handleDrop(e, 'suffix');
+            prefixSlot.ondragover = null;
+            prefixSlot.ondrop = null;
+            prefixSlot.style.opacity = "0.3";
+            suffixSlot.style.opacity = "1";
+        }
+
+        const dock = document.getElementById('options-dock');
+        dock.innerHTML = lvl.options.sort(() => Math.random() - 0.5).map(opt => `
+            <div class="word-piece" draggable="true" ondragstart="drag(event)" onclick="handlePieceClick('${opt}')" id="piece-${opt}">${opt}</div>
+        `).join('');
+
+        document.getElementById('feedback').innerText = "";
+    }
+
+    function allowDrop(e) {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = "copy";
+        e.currentTarget.classList.add('drag-over');
+    }
+
+    // Handle drag leave
+    document.addEventListener('dragleave', (e) => {
+        if (e.target.classList.contains('word-slot')) {
+            e.target.classList.remove('drag-over');
+        }
+    });
+
+    function drag(e) {
+        e.dataTransfer.setData("text", e.target.innerText);
+    }
+
+    function handlePieceClick(pieceText) {
+        const lvl = levels[currentIdx];
+        const slotType = lvl.type;
+        const target = document.getElementById(`drop-${slotType}`);
+        
+        // Visual feedback for click
+        const piece = document.getElementById(`piece-${pieceText}`);
+        piece.style.transform = "scale(0.9)";
+        setTimeout(() => piece.style.transform = "scale(1)", 100);
+
+        validatePiece(pieceText, target);
+    }
+
+    async function handleDrop(e, slotType) {
+        e.preventDefault();
+        const target = e.currentTarget;
+        target.classList.remove('drag-over');
+
+        const pieceText = e.dataTransfer.getData("text");
+        validatePiece(pieceText, target);
+    }
+
+    function validatePiece(pieceText, target) {
+        const lvl = levels[currentIdx];
+        const feedback = document.getElementById('feedback');
+
+        if (pieceText === lvl.correct) {
+            target.innerText = pieceText;
+            target.style.background = "#4ade80";
+            target.style.color = "white";
+            target.style.borderColor = "#4ade80";
+            score += 20;
+            document.getElementById('score').innerText = score;
+            feedback.innerHTML = '<span style="color: #4ade80">Correct! Word formed! ✨</span>';
+
+            setTimeout(() => {
+                currentIdx++;
+                if (currentIdx < levels.length) {
+                    loadLevel();
+                } else {
+                    finishGame();
+                }
+            }, 1500);
+        } else {
+            feedback.innerHTML = '<span style="color: #f87171">Try another piece! ❌</span>';
+            target.classList.add('shake');
+            setTimeout(() => target.classList.remove('shake'), 400);
+        }
+    }
+
+    async function finishGame() {
+        document.getElementById('word-construction').innerHTML = `
+            <div class="glass-card" style="padding: 3rem;">
+                <h2 style="font-size: 3rem;">Morphology Master!</h2>
+                <p style="font-size: 1.5rem; margin: 1rem 0;">You built all the words perfectly!</p>
+                <div style="font-size: 5rem;">🏆📝</div>
+                <button class="btn-primary mt-2" onclick="window.location.href='/learning'">Back to Hub</button>
+            </div>
+        `;
+
+        await fetch('/api/log_activity', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                type: 'Grammar Mastery',
+                score: score,
+                details: 'Completed Word Builder: Prefixes & Suffixes.'
+            })
+        });
+    }
+
+    loadLevel();
+</script>
+{% endblock %}
