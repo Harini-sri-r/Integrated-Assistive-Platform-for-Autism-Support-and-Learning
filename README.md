@@ -79,13 +79,13 @@ http://127.0.0.1:5000/
 ## 📸 Screenshots
 
 ### Home Page
-![Home](screenshots/home.png)
+![Home](screenshots/home.png.png)
 
 ### Chatbot Interaction
-![Chatbot](screenshots/chatbot.png)
+![Chatbot](screenshots/chatbot.png.png)
 
 ### Learning Section
-![Learning](screenshots/learn.png)
+![Learning](screenshots/learn.png.png)
 
 ---
 
